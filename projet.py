@@ -7,6 +7,8 @@ class Personne():
         self.ev=ev
         self.age=age
         self.humeur = 5
+    def __repr__(self):
+        return self.nom
     def vieillir(self):
         self.age+=1
         if self.age>self.ev:
@@ -76,7 +78,7 @@ class Seigneur(Noble):
         self.l_vassaux=l_vassaux
         
 
-    def collecte_impots(self)::
+    def collecte_impots(self):
         for vassal in l_vassaux :
             self.ressoures += ((0.1) * vassal.ressources) ## 10% des ressources du vassal
             vassal.ressources -= ((0.1) * vassal.ressources)
@@ -93,14 +95,11 @@ class Case():
         self.captured=True
         
 class Village(Case):
-    def __init__(self,chef,coords,terrain):
-        super().__init__(coords,terrain)
+    def __init__(self,chef):
         self.type="village"
         self.chef=chef
+        self.hasEglise=False
         self.habitants=[]
-        
-            
-            
         
             
 
