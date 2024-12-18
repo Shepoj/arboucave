@@ -34,14 +34,14 @@ class Soldat(Personne):
 
 
 class Ecclesiastique(Personne):
-    def __init__(self, nom,ev,age,argent):
+    def __init__(self, nom,ev,age):
         super().__init__(nom,ev,age)
         self.argent=argent
         self.don=random.choice(["prod","vie","humeur","guerre"])
 
 
 class Noble(Personne):
-    def __init__(self,nom,ev,age,terres,l_roturiers):
+    def __init__(self,nom,ev,age,terres=[]):
         super().__init__(nom,ev,age)
         self.argent=random.randint(10,50)
         self.ressources=random.randint(10,50)
@@ -99,6 +99,8 @@ class Village(Case):
         self.type="village"
         self.chef=chef
         self.hasEglise=False
+        self.terres=[self.coords]
+        self.chef.terres=[self.coords]
         self.habitants=[]
         
             

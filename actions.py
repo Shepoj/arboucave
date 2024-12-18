@@ -5,18 +5,20 @@ import noms
 def creer_personne(statut, classe="paysan"):
     nom=random.choice(noms.noms)
     prenom=random.choice(noms.prenoms)
+    ev = random.randint(30,80)
+    age = random.randint(0,ev)
     nom_complet=prenom+" "+(nom if statut!="noble" else "de "+nom)
     if statut == "roturier":
-        personne = projet.Roturier(classe,nom_complet,random.randint(0,100),random.randint(0,50))
+        personne = projet.Roturier(classe,nom_complet,ev,age)
     elif statut == "soldat":
-        personne = projet.Soldat(nom_complet,random.randint(0,100),random.randint(0,50))
+        personne = projet.Soldat(nom_complet,ev,age)
     elif statut == "ecclesiastique":
-        personne = projet.Ecclesiastique(nom_complet,random.randint(0,100),random.randint(0,50),random.randint(0,100))
+        personne = projet.Ecclesiastique(nom_complet,ev,age)
     elif statut == "noble":
-        personne = projet.Noble(nom_complet,random.randint(0,100),random.randint(0,50),random.randint(0,100),[])
+        personne = projet.Noble(nom_complet,ev,age,random.randint(0,100))
     return personne
 
-def immigration (village,immigrant,nb) : ##idee generale
+def immigration (village) : ##idee generale
     for i in range(nb):
         if immigrant.statut == "paysan":
             cout_action-=X
@@ -27,8 +29,10 @@ def immigration (village,immigrant,nb) : ##idee generale
             village.argent+=immigrant.argent
 
 
-def construire_eglise():
+def construire_eglise(village):
     cout_action = cout_action -X
+    village.hasEglise = True
+    village.habitants.append(creer_personne("ecclesiastique"))
 
 
 def create_village(case, init = False):
