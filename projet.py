@@ -115,6 +115,7 @@ class Village(Case):
         self.terres=[lieu.coords]
         self.chef.terres=[lieu.coords]
         self.habitants=[]
+        self.armee=0
         self.maxHabitants = len(self.terres)*20
         self.vassaux=[]
     def ajoutTerres(self,terre):

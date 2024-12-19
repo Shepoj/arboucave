@@ -110,7 +110,6 @@ def villageButton(i,j,player):
         for y in range(miny,maxy):
             if carte[x][y].type=="village":
                 isVillage=True
-                print("oui")
     if not isVillage and carte[i][j].master==player.village:
         bouton=tk.Button(panneau, text="Construire un village", command=lambda: drawVillage(i,j,player))
         bouton.pack()

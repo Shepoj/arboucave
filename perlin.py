@@ -54,3 +54,4 @@ def perlinGrid(xmin, ymin, xmax, ymax, ixmax, iymax):
     
 
 #source du code : wikipedia
+#https://github.com/wadefletch/terrain/blob/main/map.py interessant
