@@ -2,6 +2,9 @@ import projet
 import random
 import noms
 
+cout_action=0
+
+
 def creer_personne(statut, classe="paysan"):
     nom=random.choice(noms.noms)
     prenom=random.choice(noms.prenoms)
@@ -29,19 +32,30 @@ def immigration (village) : ##idee generale
             village.argent+=immigrant.argent
 
 
+def vassaliser(seigneur,vassal):
+    pass
+
 def construire_eglise(village):
     cout_action = cout_action -X
     village.hasEglise = True
     village.habitants.append(creer_personne("ecclesiastique"))
 
 
-def create_village(case, init = False):
-    if not init:
-        cout_action = cout_action -X
+
+
+
+def creer_village(zone, player, init = False): #zone est une case
+    global cout_action
+    #if not init:
+        #cout_action = cout_action -X
     chef = creer_personne("noble")
-    village = projet.Village(chef)
+    village = projet.Village(zone, chef)
     village.habitants = [chef]+[creer_personne("roturier") for i in range(4)]
-    case.type = "village"
-    case.capture()
+    zone.type = "village"
+    player.fief.append(village)
     return village
 
+
+def tourSuivant():
+    #ici faire jouer les bots
+    player.actions=10

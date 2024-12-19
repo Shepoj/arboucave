@@ -1,5 +1,11 @@
 import random
 
+class Player():
+    def __init__(self,couleur,village):
+        self.couleur=couleur
+        self.village=village
+        self.fief=[village]
+        self.actions=10
 
 class Personne():
     def __init__(self,nom,ev,age):
@@ -36,7 +42,7 @@ class Soldat(Personne):
 class Ecclesiastique(Personne):
     def __init__(self, nom,ev,age):
         super().__init__(nom,ev,age)
-        self.argent=argent
+        self.argent=random.randint(0,10)
         self.don=random.choice(["prod","vie","humeur","guerre"])
 
 
@@ -46,42 +52,44 @@ class Noble(Personne):
         self.argent=random.randint(10,50)
         self.ressources=random.randint(10,50)
         self.terres=terres
-        self.l_roturiers=l_roturiers
+        self.vassaux=[]
 
     def collecte_impots(self):
-        ## A gérer
-        ## ajouter la collecte d'argent dans le cas où pas de ressources
-        ## si ni ressources ou argent , le roturier meurt
         for roturier in self.l_roturiers :
+            somme_pay = 10
+            somme_art = 5
             if roturier.statut == "paysan" :
-                self.ressoures += ((0.5) * roturier.ressources)
-                roturier.ressources -= ((0.5) * roturier.ressources)
+                if routurier.ressources == 0 :
+                    self.argent += (roturier.argent - somme_pay )
+                    roturier.argent -= somme_pay 
+                elif roturier.argent == 0 :
+                    self.ressoures += ((0.5) * roturier.ressources)
+                    roturier.ressources -= ((0.5) * roturier.ressources)
+                else :
+                    roturier.mourir()
+
             else :
-                self.ressoures += ((0.25) * roturier.ressources)
-                roturier.ressources -= ((0.25) * roturier.ressources)
+                if routurier.ressources == 0 :
+                    self.argent += (roturier.argent - somme_art)
+                    roturier.argent -= somme_art
+                elif roturier.argent == 0 :
+                    self.ressoures += ((0.25) * roturier.ressources)
+                    roturier.ressources -= ((0.25) * roturier.ressources)
+                else :
+                    roturier.mourir()
     
-    
+    def collecte_impots_vassal(self):
+        for vassal in self.vassaux :
+            self.ressoures += ((0.1) * vassal.ressources) ## 10% des ressources du vassal
+            vassal.ressources -= ((0.1) * vassal.ressources)
+
     def distribution_dime():
         
         pass
 
 
-class Vassal (Noble):
-    def __init__(self,nom,ev,age,terres,l_roturiers,argent,ressources):
-        super().__init__(nom,ev,age,terres,l_roturiers,argent,ressources)
 
     
-class Seigneur(Noble):
-    def __init__(self,nom,ev,age,terres,l_roturiers,argent,ressources,fief,l_vassaux):
-        super().__init__(nom,ev,age,terres,l_roturiers,argent,ressources)
-        self.fief=fief
-        self.l_vassaux=l_vassaux
-        
-
-    def collecte_impots(self):
-        for vassal in l_vassaux :
-            self.ressoures += ((0.1) * vassal.ressources) ## 10% des ressources du vassal
-            vassal.ressources -= ((0.1) * vassal.ressources)
 
         
 class Case():
@@ -89,20 +97,29 @@ class Case():
         self.coords=coords
         self.terrain=terrain
         self.captured=False
+        self.master=None
         self.tkItem=tkItem
         self.type=None
-    def capture(self):
+    def capture(self,village):
         self.captured=True
+        self.master=village
+        self.master.ajoutTerres(self)
         
 class Village(Case):
-    def __init__(self,chef):
+    def __init__(self,lieu,chef):
         self.type="village"
         self.chef=chef
         self.hasEglise=False
-        self.terres=[self.coords]
-        self.chef.terres=[self.coords]
+        self.lieu=lieu
+        self.coords=lieu.coords
+        self.terres=[lieu.coords]
+        self.chef.terres=[lieu.coords]
         self.habitants=[]
-        
+        self.maxHabitants = len(self.terres)*20
+        self.vassaux=[]
+    def ajoutTerres(self,terre):
+        self.terres.append(terre)
+        self.chef.terres.append(terre)
             
 
 
