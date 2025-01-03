@@ -53,4 +53,5 @@ def perlinGrid(xmin, ymin, xmax, ymax, ixmax, iymax):
     return perlin_noise
     
 
-#source du code : wikipedia
+#https://github.com/wadefletch/terrain/blob/main/map.py interessant
+

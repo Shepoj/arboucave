@@ -1,7 +1,8 @@
 import random
+import projet
 
 
-
+"""
 class Personne():
     def __init__(self, nom,ev,age):
         self.nom= nom #a generer
@@ -60,3 +61,4 @@ class Village(Case):
         self.chef=chef
         self.habitants=[]
 
+"""

@@ -8,6 +8,3 @@ for i in random.randint(len(l_events)):
     event= l_events[i]
     break
 
-swith (event):
-    case '' :
-        

@@ -1,10 +1,14 @@
 import tkinter as tk
 import perlin
-import game
+import projet
+import actions
 
 
 shape = (0.3,0.3)
 res = (84,112)
+
+gx,gy=112,84
+
 perlin_noise = perlin.perlinGrid(-shape[0], -shape[1], shape[0], shape[1], res[0], res[1])
 
 
@@ -33,14 +37,16 @@ for i in range(len(perlin_noise)):
             canevas.itemconfig(test, tags=['herbe'])
         else:
             canevas.itemconfig(test, tags=['eau'])
-        tile=game.Case((i,j),test,terrain)
+        tile=projet.Case((i,j),test,terrain)
         carte[i].append(tile)
 
 
 
 def on_enter(event, item):
     canevas.itemconfig(item.tkItem, outline='red', width = 2)
-    canevas.tag_raise(item.tkItem, 'all')
+    canevas.tag_raise(item.tkItem,"all")
+    #canevas.tag_raise("village")
+
     canevas.bind('<Button-1>', lambda event, item=item : on_click(item.coords))
 
 
@@ -52,13 +58,14 @@ def on_leave(event, item):
     outlineontop()
 
 def on_click(event):
+    global player
     for child in panneau.winfo_children():
         child.destroy()
     x = event[0]
     y = event[1]
-    player="lime"
     squareData=tk.Label(panneau, text='Case '+str(x)+', '+str(y), bg='gray')
     squareData.pack(side="top")
+    showVillageButton(x,y,player)
     showCaptureButton(x,y,player)
     
         
@@ -71,47 +78,71 @@ def capture(i,j,player):
     if 'captured' in canevas.gettags(carte[i][j].tkItem):
         return
     color = tuple((c//256 for c in win.winfo_rgb(coul)))
-    playcolor = tuple((c//256 for c in win.winfo_rgb(player)))
+    playcolor = tuple((c//256 for c in win.winfo_rgb(player.couleur)))
     final='#'
     for val in range(3):
         aadd=str(hex((color[val]+playcolor[val])//2))[-2:]
         if aadd.startswith('x'):
             aadd='0'+aadd[1:]
         final+=aadd
-    canevas.itemconfig(carte[i][j].tkItem, fill=final, tags=list(canevas.gettags(carte[i][j].tkItem))+['captured', 'capturedby*'+player])
-    updateCapturedOutline(player)
+    canevas.itemconfig(carte[i][j].tkItem, fill=final, tags=list(canevas.gettags(carte[i][j].tkItem))+['captured', 'capturedby*'+player.couleur])
+    carte[i][j].capture(player.village)
+    updateCapturedOutline(player.couleur)
     
 
-
-
+def drawVillage(i,j,player,init=False):
+    global taillecase
+    if not init:
+        actions.creer_village(carte[i][j],player)
+    tile=carte[i][j].tkItem
+    tilecos=canevas.coords(tile)
+    canevas.create_polygon((tilecos[0]+taillecase/2),(tilecos[1]+taillecase/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*2/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*2/6), outline='black',fill=player.couleur,tags=["village"])
 
 def captureButton(i,j,player):
     print("ll")
     bouton=tk.Button(panneau, text="Capture", command=lambda: capture(i,j,player))
     bouton.pack()
 
+def villageButton(i,j,player):
+    global gx,gy
+    tile=carte[i][j]
+    minx,miny=max(0,i-2),max(0,j-2)
+    maxx,maxy=min(gx,i+3),min(gy,j+3)
+    isVillage=False
+    for x in range(minx,maxx):
+        for y in range(miny,maxy):
+            if carte[x][y].type=="village":
+                isVillage=True
+    if not isVillage and carte[i][j].master==player.village:
+        bouton=tk.Button(panneau, text="Construire un village", command=lambda: drawVillage(i,j,player))
+        bouton.pack()
+    
+def showVillageButton(i,j,player):
+    if carte[i][j].master==player.village:
+        villageButton(i,j,player)
+
 def showCaptureButton(i,j,player):
-    if 'captured' not in canevas.gettags(carte[i][j].tkItem):
+    if not carte[i][j].captured: 
         if j == 0 and i == 0:
-            if 'captured' in canevas.gettags(carte[i + 1][j].tkItem) or 'captured' in canevas.gettags(carte[i][j + 1].tkItem):
+            if carte[i+1][j].master==player.village or carte[i][j+1].master==player.village:
                 captureButton(i, j, player)
         elif j == 0:
-            if 'captured' in canevas.gettags(carte[i][j + 1].tkItem) or 'captured' in canevas.gettags(carte[i + 1][j].tkItem) or 'captured' in canevas.gettags(carte[i - 1][j].tkItem):
+            if carte[i][j + 1].master==player.village or carte[i + 1][j].master==player.village or carte[i - 1][j].master==player.village:
                 captureButton(i, j, player)
         elif i == 0:
-            if 'captured' in canevas.gettags(carte[i + 1][j].tkItem) or 'captured' in canevas.gettags(carte[i][j + 1].tkItem) or 'captured' in canevas.gettags(carte[i][j - 1].tkItem):
+            if carte[i + 1][j].master==player.village or carte[i][j + 1].master==player.village or carte[i][j - 1].master==player.village:
                 captureButton(i, j, player)
         elif i == len(carte) - 1 and j == len(carte[i]) - 1:
-            if 'captured' in canevas.gettags(carte[i - 1][j].tkItem) or 'captured' in canevas.gettags(carte[i][j - 1].tkItem):
+            if carte[i - 1][j].master==player.village or carte[i][j - 1].master==player.village:
                 captureButton(i, j, player)
         elif i == len(carte) - 1:
-            if 'captured' in canevas.gettags(carte[i - 1][j].tkItem) or 'captured' in canevas.gettags(carte[i][j + 1].tkItem) or 'captured' in canevas.gettags(carte[i][j - 1].tkItem):
+            if carte[i - 1][j].master==player.village or carte[i][j + 1].master==player.village or carte[i][j - 1].master==player.village:
                 captureButton(i, j, player)
         elif j == len(carte[i]) - 1:
-            if 'captured' in canevas.gettags(carte[i + 1][j].tkItem) or 'captured' in canevas.gettags(carte[i][j - 1].tkItem) or 'captured' in canevas.gettags(carte[i - 1][j].tkItem):
+            if carte[i + 1][j].master==player.village or carte[i][j - 1].master==player.village or carte[i - 1][j].master==player.village:
                 captureButton(i, j, player)
         else:
-            if 'captured' in canevas.gettags(carte[i + 1][j].tkItem) or 'captured' in canevas.gettags(carte[i][j + 1].tkItem) or 'captured' in canevas.gettags(carte[i][j - 1].tkItem) or 'captured' in canevas.gettags(carte[i - 1][j].tkItem):
+            if carte[i + 1][j].master==player.village or carte[i][j + 1].master==player.village or carte[i][j - 1].master==player.village or carte[i - 1][j].master==player.village:
                 captureButton(i, j, player)
 
 
@@ -157,7 +188,6 @@ def do_zoom_in(event):
     y = canevas.canvasy(event.y)
     factor = 1.1
     taillecase=taillecase*factor
-    canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
     canevas.scale(tk.ALL, x, y, factor, factor) #https://stackoverflow.com/questions/48112492/canvas-scale-only-size-but-not-coordinates html
     
 
@@ -168,7 +198,6 @@ def do_zoom_out(event):
     if taillecase>=8:
         factor = 0.9
         taillecase=taillecase*factor
-        canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
         canevas.scale(tk.ALL, x, y, factor, factor)
 
 def test(event):
@@ -189,13 +218,19 @@ canevas.bind('<ButtonPress-3>', test)
 canevas.bind('<ButtonPress-2>', lambda event: canevas.scan_mark(event.x, event.y))
 canevas.bind("<B2-Motion>", lambda event: canevas.scan_dragto(event.x, event.y, gain=1))
 
-
 canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
 
+#canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
 
 
+#temp
+player=projet.Player("lime",None)
+village=actions.creer_village(carte[10][10],player)
+player.village=village
+capture(10,10,player)
+drawVillage(10,10,player,True)
+#temp
 
-capture(10,10,"lime")
 
 donnees.grid(column=0,row=0,columnspan=2)
 canevas.grid(column=0,row=1)

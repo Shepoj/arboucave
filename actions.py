@@ -4,6 +4,7 @@ import noms
 
 cout_action=0
 
+
 def creer_personne(statut, classe="paysan"):
     nom=random.choice(noms.noms)
     prenom=random.choice(noms.prenoms)
@@ -19,6 +20,7 @@ def creer_personne(statut, classe="paysan"):
     elif statut == "noble":
         personne = projet.Noble(nom_complet,ev,age,random.randint(0,100))
     return personne
+
 
 def immigration (village,statut,NbImmigrant) : ##idee generale
 
@@ -41,6 +43,7 @@ def immigration (village,statut,NbImmigrant) : ##idee generale
 ##        print ("Population maximale atteinte !!!")
 ##    else :
 ##        print (str(NbImmigration) + " immigrations réussies." if NbImmigrant>1 else str(NbImmigration) + " immigration réussie." )
+
 
 def vassaliser(seigneur,vassal):
     pass
@@ -73,8 +76,6 @@ def epidemies(village):
         if habitant.ev < 2 :
             habitant.veieillir()
     
-
-
 
 
 
