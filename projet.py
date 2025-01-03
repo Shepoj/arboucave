@@ -1,11 +1,13 @@
 import random
 
+
 class Player():
     def __init__(self,couleur,village):
         self.couleur=couleur
         self.village=village
         self.fief=[village]
         self.actions=10
+
 
 class Personne():
     def __init__(self,nom,ev,age):
@@ -40,9 +42,9 @@ class Soldat(Personne):
 
 
 class Ecclesiastique(Personne):
-    def __init__(self, nom,ev,age):
+    def __init__(self, nom,ev,age,argent,):
         super().__init__(nom,ev,age)
-        self.argent=random.randint(0,10)
+        self.argent=argent
         self.don=random.choice(["prod","vie","humeur","guerre"])
 
 
@@ -52,6 +54,7 @@ class Noble(Personne):
         self.argent=random.randint(10,50)
         self.ressources=random.randint(10,50)
         self.terres=terres
+    def collecte_impots_roturier(self):
         self.vassaux=[]
 
     def collecte_impots(self):
@@ -67,7 +70,6 @@ class Noble(Personne):
                     roturier.ressources -= ((0.5) * roturier.ressources)
                 else :
                     roturier.mourir()
-
             else :
                 if routurier.ressources == 0 :
                     self.argent += (roturier.argent - somme_art)
@@ -77,6 +79,24 @@ class Noble(Personne):
                     roturier.ressources -= ((0.25) * roturier.ressources)
                 else :
                     roturier.mourir()
+              
+    montant_dime= 15
+    def distribution_dime(self, Ecclesiastique: ecclesiastique):
+        ecclesiastique.argent += montant_dime
+        self.argent -= montant_dime
+        
+
+class Vassal (Noble):
+    def __init__(self,nom,ev,age,terres,l_roturiers,argent,ressources):
+        super().__init__(nom,ev,age,terres,l_roturiers,argent,ressources)
+
+    
+class Seigneur(Noble):
+    def __init__(self,nom,ev,age,terres,l_roturiers,argent,ressources,fief,l_vassaux):
+        super().__init__(nom,ev,age,terres,l_roturiers,argent,ressources)
+        self.fief=fief
+        self.l_vassaux=l_vassaux
+        
     
     def collecte_impots_vassal(self):
         for vassal in self.vassaux :
@@ -89,7 +109,7 @@ class Noble(Personne):
 
 
 
-    
+  
 
         
 class Case():
@@ -106,6 +126,7 @@ class Case():
         self.master.ajoutTerres(self)
         
 class Village(Case):
+
     def __init__(self,lieu,chef):
         self.type="village"
         self.chef=chef
@@ -121,7 +142,7 @@ class Village(Case):
     def ajoutTerres(self,terre):
         self.terres.append(terre)
         self.chef.terres.append(terre)
-            
+
 
 
 

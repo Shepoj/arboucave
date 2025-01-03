@@ -6,7 +6,9 @@ import actions
 
 shape = (0.3,0.3)
 res = (84,112)
+
 gx,gy=112,84
+
 perlin_noise = perlin.perlinGrid(-shape[0], -shape[1], shape[0], shape[1], res[0], res[1])
 
 
@@ -44,6 +46,7 @@ def on_enter(event, item):
     canevas.itemconfig(item.tkItem, outline='red', width = 2)
     canevas.tag_raise(item.tkItem,"all")
     #canevas.tag_raise("village")
+
     canevas.bind('<Button-1>', lambda event, item=item : on_click(item.coords))
 
 
@@ -185,7 +188,6 @@ def do_zoom_in(event):
     y = canevas.canvasy(event.y)
     factor = 1.1
     taillecase=taillecase*factor
-    #canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
     canevas.scale(tk.ALL, x, y, factor, factor) #https://stackoverflow.com/questions/48112492/canvas-scale-only-size-but-not-coordinates html
     
 
@@ -196,7 +198,6 @@ def do_zoom_out(event):
     if taillecase>=8:
         factor = 0.9
         taillecase=taillecase*factor
-        #canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
         canevas.scale(tk.ALL, x, y, factor, factor)
 
 def test(event):
@@ -217,6 +218,7 @@ canevas.bind('<ButtonPress-3>', test)
 canevas.bind('<ButtonPress-2>', lambda event: canevas.scan_mark(event.x, event.y))
 canevas.bind("<B2-Motion>", lambda event: canevas.scan_dragto(event.x, event.y, gain=1))
 
+canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
 
 #canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
 

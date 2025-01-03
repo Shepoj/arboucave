@@ -21,15 +21,28 @@ def creer_personne(statut, classe="paysan"):
         personne = projet.Noble(nom_complet,ev,age,random.randint(0,100))
     return personne
 
-def immigration (village) : ##idee generale
-    for i in range(nb):
-        if immigrant.statut == "paysan":
-            cout_action-=X
-            village.habitants+=[]
+
+def immigration (village,statut,NbImmigrant) : ##idee generale
+
+    i=1
+    cout_paysan  = 0
+    cout_artisan = 0
+
+    while ((len(village.habitants)+i) <= village.maxhabitants) and i <= NbImmigrant:
+        if statut == "paysan":
+            cout_action-=cout_paysan
+            village.habitants.append(creer_personne("paysan"))
         else:
-            cout_action-=Y
-            village.habitants+=[]
-            village.argent+=immigrant.argent
+            cout_action-=cout_artisan
+            personne=creer_personne("artisan")
+            village.habitants.append(personne)
+            village.argent+=personne.argent
+        i+=1
+        
+##    if len(village.habitants) == village.maxhabitants :
+##        print ("Population maximale atteinte !!!")
+##    else :
+##        print (str(NbImmigration) + " immigrations réussies." if NbImmigrant>1 else str(NbImmigration) + " immigration réussie." )
 
 
 def vassaliser(seigneur,vassal):
@@ -39,9 +52,6 @@ def construire_eglise(village):
     cout_action = cout_action -X
     village.hasEglise = True
     village.habitants.append(creer_personne("ecclesiastique"))
-
-
-
 
 
 def creer_village(zone, player, init = False): #zone est une case
@@ -59,3 +69,22 @@ def creer_village(zone, player, init = False): #zone est une case
 def tourSuivant():
     #ici faire jouer les bots
     player.actions=10
+
+
+def epidemies(village):
+    for habitant in village.habitants :
+        if habitant.ev < 2 :
+            habitant.veieillir()
+    
+
+
+
+
+
+
+
+
+
+
+
+
