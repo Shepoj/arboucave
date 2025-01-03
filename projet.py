@@ -8,6 +8,7 @@ class Player():
         self.fief=[village]
         self.actions=10
         self.j1=j1
+    
         
 
 
@@ -56,9 +57,8 @@ class Noble(Personne):
         self.argent=random.randint(10,50)
         self.ressources=random.randint(10,50)
         self.terres=terres
-    def collecte_impots_roturier(self):
-        self.vassaux=[]
-
+        self.seigneur=None
+        self.l_vassaux=[]
     def collecte_impots(self):
         for roturier in self.l_roturiers :
             somme_pay = 10
@@ -69,7 +69,7 @@ class Noble(Personne):
                     roturier.argent -= somme_pay 
                 elif roturier.argent == 0 :
                     self.ressoures += ((0.5) * roturier.ressources)
-                    roturier.ressources -= ((0.5) * roturier.ressources)
+                    roturier.ressources -= ((0.5) * roturier.ressources) # a refaire nul
                 else :
                     roturier.mourir()
             else :
@@ -85,32 +85,19 @@ class Noble(Personne):
         montant_dime= 15
         ecclesiastique.argent += montant_dime
         self.argent -= montant_dime
+    def vassalisation(self,seigneur):
+        self.seigneur=seigneur
+        seigneur.l_vassaux.append(self)
         
-
-class Vassal (Noble):
-    def __init__(self,nom,ev,age,terres,l_roturiers,argent,ressources):
-        super().__init__(nom,ev,age,terres,l_roturiers,argent,ressources)
-
-    
-class Seigneur(Noble):
-    def __init__(self,nom,ev,age,terres,l_roturiers,argent,ressources,fief,l_vassaux):
-        super().__init__(nom,ev,age,terres,l_roturiers,argent,ressources)
-        self.fief=fief
-        self.l_vassaux=l_vassaux
-        
-    
-    def collecte_impots_vassal(self):
-        for vassal in self.vassaux :
-            self.ressoures += ((0.1) * vassal.ressources) ## 10% des ressources du vassal
-            vassal.ressources -= ((0.1) * vassal.ressources)
-
-    def distribution_dime():
-        
-        pass
+    def imposition_seigneur(self):
+        impotArgent = int(0.3*self.argent)
+        impotRessources = int(0.3*self.ressources)
+        self.argent -= impotArgent
+        self.ressources -= impotRessources
+        self.seigneur.argent += impotArgent
+        self.seigneur.ressources += impotRessources
 
 
-
-  
 
         
 class Case():
@@ -127,7 +114,6 @@ class Case():
         self.master.ajoutTerres(self)
         
 class Village(Case):
-
     def __init__(self,lieu,chef):
         self.type="village"
         self.chef=chef

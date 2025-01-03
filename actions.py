@@ -22,13 +22,12 @@ def creer_personne(statut, classe="paysan"):
     return personne
 
 
-def immigration (village,statut,NbImmigrant) : ##idee generale
-
+def immigration (village,statut) : 
     i=1
     cout_paysan  = 0
     cout_artisan = 0
 
-    while ((len(village.habitants)+i) <= village.maxhabitants) and i <= NbImmigrant:
+    while len(village.habitants) <= village.maxhabitants and i <= 3:
         if statut == "paysan":
             cout_action-=cout_paysan
             village.habitants.append(creer_personne("paysan"))
@@ -39,11 +38,6 @@ def immigration (village,statut,NbImmigrant) : ##idee generale
             village.argent+=personne.argent
         i+=1
         
-##    if len(village.habitants) == village.maxhabitants :
-##        print ("Population maximale atteinte !!!")
-##    else :
-##        print (str(NbImmigration) + " immigrations réussies." if NbImmigrant>1 else str(NbImmigration) + " immigration réussie." )
-
 
 def vassaliser(seigneur,vassal):
     pass
@@ -55,27 +49,21 @@ def construire_eglise(village):
 
 
 def creer_village(zone, player, init = False): #zone est une case
-    global cout_action
-    #if not init:
-        #cout_action = cout_action -X
+    if not init:
+        player.actions -= 1
+        player.village.chef.ressources -= 10
     chef = creer_personne("noble")
     village = projet.Village(zone, chef)
     village.habitants = [chef]+[creer_personne("roturier") for i in range(4)]
     zone.type = "village"
+    zone.master = village
     player.fief.append(village)
+    
     return village
 
 
 def tourSuivant():
     pass
-
-
-def epidemies(village):
-    for habitant in village.habitants :
-        if habitant.ev < 2 :
-            habitant.vieillir()
-    
-
 
 
 
