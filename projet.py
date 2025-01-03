@@ -2,11 +2,13 @@ import random
 
 
 class Player():
-    def __init__(self,couleur,village):
+    def __init__(self,couleur,village, j1=False):
         self.couleur=couleur
         self.village=village
         self.fief=[village]
         self.actions=10
+        self.j1=j1
+        
 
 
 class Personne():
@@ -62,7 +64,7 @@ class Noble(Personne):
             somme_pay = 10
             somme_art = 5
             if roturier.statut == "paysan" :
-                if routurier.ressources == 0 :
+                if roturier.ressources == 0 :
                     self.argent += (roturier.argent - somme_pay )
                     roturier.argent -= somme_pay 
                 elif roturier.argent == 0 :
@@ -71,7 +73,7 @@ class Noble(Personne):
                 else :
                     roturier.mourir()
             else :
-                if routurier.ressources == 0 :
+                if roturier.ressources == 0 :
                     self.argent += (roturier.argent - somme_art)
                     roturier.argent -= somme_art
                 elif roturier.argent == 0 :
@@ -79,9 +81,8 @@ class Noble(Personne):
                     roturier.ressources -= ((0.25) * roturier.ressources)
                 else :
                     roturier.mourir()
-              
-    montant_dime= 15
-    def distribution_dime(self, Ecclesiastique: ecclesiastique):
+    def distribution_dime(self, ecclesiastique):
+        montant_dime= 15
         ecclesiastique.argent += montant_dime
         self.argent -= montant_dime
         

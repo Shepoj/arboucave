@@ -218,13 +218,13 @@ canevas.bind('<ButtonPress-3>', test)
 canevas.bind('<ButtonPress-2>', lambda event: canevas.scan_mark(event.x, event.y))
 canevas.bind("<B2-Motion>", lambda event: canevas.scan_dragto(event.x, event.y, gain=1))
 
-canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
+
 
 #canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
 
 
 #temp
-player=projet.Player("lime",None)
+player=projet.Player("lime",None, True)
 village=actions.creer_village(carte[10][10],player)
 player.village=village
 capture(10,10,player)

@@ -52,6 +52,6 @@ def perlinGrid(xmin, ymin, xmax, ymax, ixmax, iymax):
             perlin_noise[i][j] = generatePerlin(10*x, 10*y, gradients)
     return perlin_noise
     
-
+#source du code a preciser : wikipedia
 #https://github.com/wadefletch/terrain/blob/main/map.py interessant
 

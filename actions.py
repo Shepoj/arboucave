@@ -49,7 +49,7 @@ def vassaliser(seigneur,vassal):
     pass
 
 def construire_eglise(village):
-    cout_action = cout_action -X
+    cout_action = cout_action - X
     village.hasEglise = True
     village.habitants.append(creer_personne("ecclesiastique"))
 
@@ -67,14 +67,13 @@ def creer_village(zone, player, init = False): #zone est une case
 
 
 def tourSuivant():
-    #ici faire jouer les bots
-    player.actions=10
+    pass
 
 
 def epidemies(village):
     for habitant in village.habitants :
         if habitant.ev < 2 :
-            habitant.veieillir()
+            habitant.vieillir()
     
 
 
