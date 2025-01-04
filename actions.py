@@ -53,7 +53,7 @@ def strategie(armee: int, part: tuple[int, int, int]):
 
 def pfc(coup: int, ennemi: int):
     # 0: pierre, 1: papier, 2: ciseau
-    return (enneni+1)%3 == coup
+    return (ennemi+1)%3 == coup
 
 def bataille(allie: int, ennemi: int, avantage: bool):
     if avantage:
