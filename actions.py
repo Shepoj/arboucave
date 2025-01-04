@@ -2,14 +2,14 @@ import projet
 import random
 import noms
 
-from projet import Personne, Roturier, Soldat, Ecclesiastique, Noble
+from projet import Personne, Roturier, Soldat, Ecclesiastique, Noble, Village
 
 cout_action=0
 
 
-def creer_personne(statut, player = None, paysan = True):
+def creer_personne(statut: str, player = None, paysan = True):
     if statut == "roturier":
-        return Roturier("paysan" if paysan else "artisan")
+        return Roturier()
     elif statut == "soldat":
         return Soldat()
     elif statut == "ecclesiastique":
@@ -36,10 +36,8 @@ def creer_village(zone, player, init = False): #zone est une case
     if not init:
         player.actions -= 1
         player.village.chef.ressources -= 10
-    chef = creer_personne("noble", player)
-    village = projet.Village(zone, chef)
-    village.habitants = [chef]+[creer_personne("roturier") for i in range(4)]
-    chef.village = village
+
+    village = Village(zone, player)
     zone.type = "village"
     zone.master = village
     player.fief.append(village)

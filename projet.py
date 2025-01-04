@@ -14,13 +14,13 @@ class Player():
 
 class Personne():
     def __init__(self,
-        prenom = choice(noms),
-        nom = choice(prenoms),
+        prenom = None,
+        nom = None,
         age: int | None = None,
         ev = randint(30, 80)):
 
-        self.prenom = prenom
-        self.nom = nom
+        self.prenom = choice(prenoms) if prenom is None else prenom
+        self.nom = choice(noms) if nom is None else nom
         self.age = randint(0, ev) if age is None else age
         self.ev = ev
 
@@ -43,11 +43,11 @@ class Personne():
 
 
 class Roturier(Personne):
-    def __init__(self, statut, *args, **kwargs):
+    def __init__(self, paysan = True, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.statut = statut
+        self.statut = "paysan" if paysan else "artisan"
 
-        if statut == "paysan":
+        if self.statut == "paysan":
             self.argent = 0
             self.ressources = 0
             self.prod=random.randint(2,5)
@@ -67,7 +67,7 @@ class Ecclesiastique(Personne):
 
 
 class Noble(Personne):
-    def __init__(self, player = None, *args, **kwargs):
+    def __init__(self, player: Player | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.argent=random.randint(10,50)
         self.ressources=random.randint(10,50)
@@ -152,12 +152,15 @@ class Case():
             
         
 class Village(Case):
-    def __init__(self, lieu, chef):
+    def __init__(self, lieu, player = None):
         self.type="village"
 
         self.habitants = []
-        self.chef = chef
-        self.ajout_habitant(chef)
+
+        self.chef = Noble(player)
+        self.ajout_habitant(self.chef)
+        for _ in range(4):
+            self.ajout_habitant(Roturier())
 
         self.hasEglise = False
         self.lieu = lieu
@@ -176,5 +179,6 @@ class Village(Case):
 
 
 if __name__ == "__main__":
-    p = Noble()
-    print(p)
+    p = Personne()
+    p2 = Personne()
+    print(p, p2)
