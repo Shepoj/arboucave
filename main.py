@@ -5,7 +5,8 @@ import actions
 import math
 import random
 
-from projet import Player
+from projet import Player, Village
+from actions import guerre
 
 
 shape = (0.3,0.3)
@@ -158,6 +159,12 @@ def villageButton(i,j,player):
             bouton.config(state='disabled')
             
 
+
+def repeindre_villages(villages: list[Village]):
+    print("repeindre")
+    for village in villages:
+        drawVillage(*village.coords, village.chef.player, True)
+
 def showVillageInfo(i,j,player: Player):
     village=carte[i][j].master
     if village==None:
@@ -181,6 +188,20 @@ def showVillageInfo(i,j,player: Player):
         #debug
         habitants_info = tk.Label(panneau, text=village.info_habitants(), bg="gray")
         habitants_info.pack(side="top")
+
+    #guerre
+    if village.chef.player != player:
+        bouton = [None]
+        def f(): 
+            if guerre(player, village.chef.player):
+                repeindre_villages(village.chef.player.fief)
+            bouton[0].destroy()
+        
+        bouton_guerre = tk.Button(panneau, text="Guerroyer", command=f)
+        bouton = [bouton_guerre]
+        bouton_guerre.pack()
+        if False and player.armee == 0:
+            bouton_guerre.config(state="disabled")
 
 def showBuildButton(i,j,player):
     location=carte[i][j]
