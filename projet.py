@@ -1,5 +1,6 @@
 import random
-
+from random import randint, choice
+from noms import prenoms, noms
 
 class Player():
     def __init__(self,couleur,village, j1=False):
@@ -8,18 +9,32 @@ class Player():
         self.fief=[village] if village else []
         self.actions=10
         self.j1=j1
-    
-        
+
 
 
 class Personne():
-    def __init__(self,nom,ev,age):
-        self.nom= nom #a generer
-        self.ev=ev
-        self.age=age
+    def __init__(self,
+        prenom = choice(noms),
+        nom = choice(prenoms),
+        age: int | None = None,
+        ev = randint(30, 80)):
+
+        self.prenom = prenom
+        self.nom = nom
+        self.age = randint(0, ev) if age is None else age
+        self.ev = ev
         self.humeur = 5
+
     def __repr__(self):
-        return self.nom
+        return self.affiche_nom
+    
+    def __str__(self):
+        return self.affiche_nom
+    
+    @property
+    def affiche_nom(self) -> str:
+        return f"{self.nom} {self.prenom}"
+
     def vieillir(self):
         self.age+=1
         if self.age>self.ev:
@@ -60,6 +75,7 @@ class Noble(Personne):
         self.seigneur=None
         self.player=player
         self.l_vassaux=[]
+
     def collecte_impots(self):
         for roturier in self.l_roturiers :
             somme_pay = 10
@@ -82,14 +98,17 @@ class Noble(Personne):
                     roturier.ressources -= ((0.25) * roturier.ressources)
                 else :
                     roturier.mourir()
+
     def distribution_dime(self, ecclesiastique):
         montant_dime= 15
         ecclesiastique.argent += montant_dime
         self.argent -= montant_dime
+
     def vassalisation(self,seigneur):
         self.seigneur=seigneur
         seigneur.l_vassaux.append(self)
         seigneur.player.fief.append(self.village)
+
     def imposition_seigneur(self):
         impotArgent = int(0.3*self.argent)
         impotRessources = int(0.3*self.ressources)
@@ -132,9 +151,6 @@ class Village(Case):
         self.terres.append(terre)
 
 
-
-
-
-
-
-
+if __name__ == "__main__":
+    p = Personne()
+    print(p)
