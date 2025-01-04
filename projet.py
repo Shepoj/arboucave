@@ -90,6 +90,9 @@ class Noble(Personne):
         self.seigneur=seigneur
         seigneur.l_vassaux.append(self)
         seigneur.player.fief.append(self.village)
+        if self.player:
+            self.player.fief.remove(self.village)
+        self.player=seigneur.player
     def imposition_seigneur(self):
         impotArgent = int(0.3*self.argent)
         impotRessources = int(0.3*self.ressources)
