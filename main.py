@@ -190,7 +190,7 @@ def drawBuilding(i,j,player):
     global taillecase
     tile=carte[i][j].tkItem
     tilecos=canevas.coords(tile)
-    draw_gear(canevas, tilecos[0]+taillecase/2, tilecos[1]+taillecase/2, taillecase/3, 6, 5, player.couleur)
+    draw_gear(canevas, tilecos[0]+taillecase/2, tilecos[1]+taillecase/2, taillecase/3, 4, 5, player.couleur)
 
 def showCollectButton(i,j,player):
     location=carte[i][j]
