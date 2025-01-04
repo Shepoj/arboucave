@@ -7,7 +7,7 @@ from projet import Personne, Roturier, Soldat, Ecclesiastique, Noble
 cout_action=0
 
 
-def creer_personne(statut, paysan = True):
+def creer_personne(statut, player = None, paysan = True):
     if statut == "roturier":
         return Roturier("paysan" if paysan else "artisan")
     elif statut == "soldat":
@@ -15,7 +15,7 @@ def creer_personne(statut, paysan = True):
     elif statut == "ecclesiastique":
         return Ecclesiastique()
     elif statut == "noble":
-        return Noble()
+        return Noble(player)
 
 
 def immigration (village,statut) : 
