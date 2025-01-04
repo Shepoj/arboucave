@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from random import randint, choice
+from random import randint, shuffle, choice
 from noms import prenoms, noms
 
 class Player():
@@ -12,6 +12,25 @@ class Player():
         self.actions=10
         self.j1=j1
 
+        self.part = (randint(0, 10), randint(0, 10), randint(0, 10))
+        self.ordre = [0, 1, 2]
+        shuffle(self.ordre)
+
+    @property
+    def armee(self):
+        return sum([village.armee for village in self.fief])
+    
+    def mort_soldats(self, pertes: int):
+        non_vu = self.armee
+        for village in self.fief:
+            for habitant in village.habitants:
+                if isinstance(habitant, Soldat):
+                    proba = pertes/non_vu
+                    if random.random() < proba:
+                        habitant.mourir()
+                        pertes += -1
+                    non_vu += -1
+            
     def etendre_fief(self, village: Village):
         self.fief.append(village)
 
@@ -19,6 +38,7 @@ class Player():
 
 class Personne():
     def __init__(self,
+        village: Village,
         prenom: str | None = None,
         nom: str | None = None,
         age: int | None = None,
@@ -28,13 +48,14 @@ class Personne():
         self.nom = choice(noms) if nom is None else nom
         self.age = randint(0, ev) if age is None else age
         self.ev = ev
-
-        self.village: Village = None
         self.humeur = 5
         self.argent = 0
+        self.ressources = 0
+
+        self.village = village
 
     def __repr__(self):
-        return f"{self.__class__.__name__} {self.argent}ⓐ"
+        return f"{self.__class__.__name__} {self.argent}ⓐ {self.ressources}⁂"
     
     def __str__(self):
         return self.affiche_nom()
@@ -47,9 +68,12 @@ class Personne():
         if self.age > self.ev:
             self.mourir()
 
+    def mourir(self):
+        self.village
+
 
 class Roturier(Personne):
-    def __init__(self, paysan = True, *args, **kwargs):
+    def __init__(self, *args, paysan = True, **kwargs):
         super().__init__(*args, **kwargs)
         self.statut = "paysan" if paysan else "artisan"
 
@@ -87,7 +111,8 @@ class Ecclesiastique(Personne):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.argent = 0 # pas defini avant
+        self.argent = 0
+        self.ressources = 1 #pour manger
         self.don = choice(["prod","vie","humeur","guerre"])
 
 
@@ -98,10 +123,11 @@ class Noble(Personne):
         self.argent = random.randint(10,50)
         self.ressources = random.randint(10,50)
 
-        self.seigneur = None
         self.player = player
+        self.seigneur = None
         self.l_roturiers: list[Roturier] = []
         self.l_vassaux: list[Noble] = []
+        self.soldats: list[Soldat] = []
 
     def affiche_nom(self):
         voy = "AEYUIOH"
@@ -179,10 +205,10 @@ class Village(Case):
         self.terres = [case.coords]
 
         self.habitants: list[Personne] = []
-        self.chef = Noble(player)
+        self.chef = Noble(player, self)
         self.ajout_habitant(self.chef)
         for _ in range(4):
-            self.ajout_habitant(Roturier())
+            self.ajout_habitant(Roturier(self))
         
         self.cure = None
         self.armee = 0
@@ -204,12 +230,15 @@ class Village(Case):
         if len(self.habitants) < self.max_habitants:
             self.habitants.append(arrivant)
             arrivant.village = self
+
+            if isinstance(arrivant, Soldat):
+                self.armee += 1
             return True
         return False
     
     def construire_eglise(self):
         if not self.hasEglise:
-            cure = Ecclesiastique()
+            cure = Ecclesiastique(self)
             if self.ajout_habitant(self, cure):
                 self.cure = cure
  
