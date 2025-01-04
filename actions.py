@@ -23,20 +23,9 @@ def creer_personne(statut, player=None, classe="paysan"):
 
 
 def immigration (village,statut) : 
-    i=1
-    cout_paysan  = 0
-    cout_artisan = 0
-
-    while len(village.habitants) <= village.maxhabitants and i <= 3:
-        if statut == "paysan":
-            cout_action-=cout_paysan
-            village.habitants.append(creer_personne("roturier", None,"paysan"))
-        else:
-            cout_action-=cout_artisan
-            personne=creer_personne("roturier", None,"artisan")
-            village.habitants.append(personne)
-            village.argent+=personne.argent
-        i+=1
+    i=0
+    while i<3 and len(village.habitants)<village.maxHabitants:
+        pass
         
 
 def vassaliser(seigneur,vassal):

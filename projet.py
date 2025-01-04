@@ -48,7 +48,7 @@ class Roturier(Personne):
             self.argent=0
             self.ressources=0
             self.prod=random.randint(2,5)
-        else:
+        else:  
             self.argent= random.randint(5,30)
             self.ressources=0
             self.prod=random.randint(5,10)
