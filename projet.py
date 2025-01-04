@@ -23,6 +23,8 @@ class Personne():
         self.nom = nom
         self.age = randint(0, ev) if age is None else age
         self.ev = ev
+
+        self.village = None
         self.humeur = 5
 
     def __repr__(self):
@@ -58,20 +60,20 @@ class Soldat(Personne):
     pass
 
 class Ecclesiastique(Personne):
-    def __init__(self, nom,ev,age,argent,):
+    def __init__(self, nom,ev,age,argent):
         super().__init__(nom,ev,age)
         self.argent=argent
         self.don=random.choice(["prod","vie","humeur","guerre"])
 
 
 class Noble(Personne):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, player = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.argent=random.randint(10,50)
         self.ressources=random.randint(10,50)
-        self.village=None
-        self.seigneur=None
-        self.player=None
+        self.village = None
+        self.seigneur = None
+        self.player = player
         self.l_vassaux=[]
 
     def affiche_nom(self):
@@ -135,20 +137,27 @@ class Case():
         self.master.ajoutTerres(self)
         
 class Village(Case):
-    def __init__(self,lieu,chef):
+    def __init__(self, lieu, chef):
         self.type="village"
-        self.chef=chef
-        chef.village=self
-        self.hasEglise=False
-        self.lieu=lieu
-        self.coords=lieu.coords
-        self.terres=[lieu.coords]
-        self.habitants=[]
-        self.armee=0
+
+        self.habitants = []
+        self.chef = chef
+        self.ajout_habitant(chef)
+
+        self.hasEglise = False
+        self.lieu = lieu
+        self.coords = lieu.coords
+        self.terres = [lieu.coords]
+        self.armee = 0
         self.maxHabitants = len(self.terres)*20
-        self.vassaux=[]
+        self.vassaux = []
+
     def ajoutTerres(self,terre):
         self.terres.append(terre)
+
+    def ajout_habitant(self, arrivant: Personne):
+        self.habitants.append(arrivant)
+        arrivant.village = self
 
 
 if __name__ == "__main__":
