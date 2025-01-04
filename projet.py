@@ -5,10 +5,10 @@ from random import randint, choice
 from noms import prenoms, noms
 
 class Player():
-    def __init__(self, couleur, village, j1=False):
+    def __init__(self, couleur, village: Village, j1=False):
         self.couleur=couleur
         self.village=village
-        self.fief=[village] if village else []
+        self.fief = [village] if village else []
         self.actions=10
         self.j1=j1
 
@@ -31,9 +31,10 @@ class Personne():
 
         self.village: Village = None
         self.humeur = 5
+        self.argent = 0
 
     def __repr__(self):
-        return f"{self.affiche_nom()} : {self.__class__.__name__}"
+        return f"{self.__class__.__name__} {self.argent}ⓐ"
     
     def __str__(self):
         return self.affiche_nom()
@@ -61,6 +62,22 @@ class Roturier(Personne):
             self.ressources = 0
             self.prod=random.randint(5,10)
 
+    def payer_impot(self, noble: Noble):
+        cout = 0.5 if self.statut=="paysan" else 0.25
+        if self.argent > 0:
+            impot = int(cout*self.argent)
+            self.argent += -impot
+            noble.argent += impot
+        elif self.ressources:
+            impot = int(cout*self.ressources)
+            self.ressources += impot
+            noble.ressources += impot
+        else:
+            self.mourir()
+
+    def mourir(self):
+        pass
+
 
 class Soldat(Personne):
     pass
@@ -77,12 +94,14 @@ class Ecclesiastique(Personne):
 class Noble(Personne):
     def __init__(self, player: Player | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.argent=random.randint(10,50)
-        self.ressources=random.randint(10,50)
-        self.village = None
+
+        self.argent = random.randint(10,50)
+        self.ressources = random.randint(10,50)
+
         self.seigneur = None
         self.player = player
-        self.l_vassaux=[]
+        self.l_roturiers: list[Roturier] = []
+        self.l_vassaux: list[Noble] = []
 
     def affiche_nom(self):
         voy = "AEYUIOH"
@@ -91,24 +110,13 @@ class Noble(Personne):
 
     def collecte_impots(self):
         for roturier in self.l_roturiers:
+            roturier.payer_impot(self)
 
-            cout= 0.5 if roturier.statut=="paysan" else 0.25
-            if roturier.argent:
-                impot = int(cout*roturier.argent)
-                roturier.argent -= impot
-                self.argent += impot
-            elif roturier.ressources:
-                impot=int(cout*roturier.ressources)
-                roturier.ressources -= impot
-                self.ressources += impot
-            else:
-                roturier.mourir()
-
-
-    def distribution_dime(self, ecclesiastique):
-        montant_dime= 15
-        ecclesiastique.argent += montant_dime
-        self.argent -= montant_dime
+    def distribution_dime(self):
+        montant = 15
+        if self.village is not None and self.village.hasEglise:
+            self.village.cure.argent += montant
+            self.argent += -montant
 
     def vassalisation(self, seigneur):
         self.seigneur=seigneur
@@ -170,13 +178,13 @@ class Village(Case):
         self.coords = case.coords
         self.terres = [case.coords]
 
-        self.habitants = []
+        self.habitants: list[Personne] = []
         self.chef = Noble(player)
         self.ajout_habitant(self.chef)
         for _ in range(4):
             self.ajout_habitant(Roturier())
         
-        self.hasEglise = False
+        self.cure = None
         self.armee = 0
         self.vassaux = []
 
@@ -187,6 +195,10 @@ class Village(Case):
     @property
     def max_habitants(self):
         return 20 * len(self.terres)
+    
+    @property
+    def hasEglise(self):
+        return self.cure is not None
 
     def ajout_habitant(self, arrivant: Personne):
         if len(self.habitants) < self.max_habitants:
@@ -194,13 +206,21 @@ class Village(Case):
             arrivant.village = self
             return True
         return False
-
+    
     def construire_eglise(self):
-        self.hasEglise = True
-        self.ajout_habitant(self, Ecclesiastique())
+        if not self.hasEglise:
+            cure = Ecclesiastique()
+            if self.ajout_habitant(self, cure):
+                self.cure = cure
  
     def ajoutTerres(self,terre):
         self.terres.append(terre)
+
+    def info_habitants(self) -> str:
+        info = ""
+        for habitant in self.habitants:
+            info += f"{repr(habitant)}\n"
+        return info
 
 
 if __name__ == "__main__":

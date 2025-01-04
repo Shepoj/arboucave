@@ -36,8 +36,12 @@ def creer_village(case, player: Player, init = False): #zone est une case
     return Village(case, player)
 
 
-def collecte_impots():
-    pass
+def collecte_impots(player: Player):
+    for village in player.fief:
+        village.chef.collecte_impots()
+    
+    for village in player.fief:
+        village.chef.distribution_dime()
 
 
 def tourSuivant():
