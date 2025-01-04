@@ -78,8 +78,12 @@ def guerre(player: Player, cible: Player):
         else:
             cible.mort_soldats(pertes)
             
+        # arrete potentiellement prematurement pour eviter des pertes
         if score == 2:
-            return True # victoire
+            player.vaincre(cible)
+            return True
+
+    cible.vaincre(player)
     return False
 
 def doEvent(fun):

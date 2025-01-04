@@ -34,6 +34,10 @@ class Player():
     def etendre_fief(self, village: Village):
         self.fief.append(village)
 
+    def vaincre(self, vaincu: Player):
+        self.fief += vaincu.fief
+        vaincu.fief = []
+
 
 
 class Personne():
@@ -212,7 +216,6 @@ class Village(Case):
         
         self.cure = None
         self.armee = 0
-        self.vassaux = []
 
         case.type = "village"
         case.master = self
