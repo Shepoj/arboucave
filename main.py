@@ -4,6 +4,8 @@ import projet
 import actions
 import math
 
+from projet import Player
+
 
 shape = (0.3,0.3)
 res = (84,112)
@@ -148,7 +150,7 @@ def villageButton(i,j,player):
             bouton.config(state='disabled')
             
 
-def showVillageInfo(i,j,player):
+def showVillageInfo(i,j,player: Player):
     village=carte[i][j].master
     if village==None:
         return
@@ -167,6 +169,10 @@ def showVillageInfo(i,j,player):
         impotButton.pack()
         if player.actions<1:
             impotButton.config(state='disabled')
+ 
+        #debug
+        habitants_info = tk.Label(panneau, text=village.info_habitants(), bg="gray")
+        habitants_info.pack(side="top")
 
 def showBuildButton(i,j,player):
     location=carte[i][j]
