@@ -48,15 +48,3 @@ def creer_village(zone, player, init = False): #zone est une case
 def tourSuivant():
     l_events =["epidemie","incendies","famine","pillage", "rien","récolte","vassalistaion"]
     event = random.choice(l_events)
-
-
-
-
-
-
-
-
-
-
-
-
