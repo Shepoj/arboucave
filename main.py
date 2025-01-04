@@ -241,9 +241,10 @@ def do_zoom_in(event):
     global taillecase
     x = canevas.canvasx(event.x)
     y = canevas.canvasy(event.y)
-    factor = 1.1
-    taillecase=taillecase*factor
-    canevas.scale(tk.ALL, x, y, factor, factor) #https://stackoverflow.com/questions/48112492/canvas-scale-only-size-but-not-coordinates html
+    if taillecase<=70:
+        factor = 1.1
+        taillecase=taillecase*factor
+        canevas.scale(tk.ALL, x, y, factor, factor) #https://stackoverflow.com/questions/48112492/canvas-scale-only-size-but-not-coordinates html
     
 
 def do_zoom_out(event):
