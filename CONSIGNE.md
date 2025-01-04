@@ -1,6 +1,6 @@
 # TD IHM - Conception d’interface
 
-## Exercice 1. Modèle conceptuel d’une application de gestion d’une société médiévale.** *(30 min)*  
+## Exercice 1. Modèle conceptuel d’une application de gestion d’une société médiévale. *(30 min)*  
 Construire le modèle conceptuel de l’interface graphique de l’application en vous appuyant sur les informations données en annexe.  
 1. Lister les fonctionnalités et les organiser. Inscrire également quand cela est nécessaire, les traitements et les réponses de l’application (le **feedback**).  
 2. Concevoir un scénario d’utilisation permettant d’illustrer un enchaînement représentatif de tâches que l’utilisateur peut avoir à accomplir en utilisant l’application.  
