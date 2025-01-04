@@ -39,7 +39,6 @@ def creer_village(case, player: Player, init = False): #zone est une case
 def collecte_impots():
     pass
 
+def doEvent(fun):
+    pass
 
-def tourSuivant():
-    l_events =["epidemie","incendies","famine","pillage", "rien","récolte","vassalistaion"]
-    event = random.choice(l_events)

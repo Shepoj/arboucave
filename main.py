@@ -3,10 +3,14 @@ import perlin
 import projet
 import actions
 import math
+import random
 
 
 shape = (0.3,0.3)
 res = (84,112)
+startpos=(0,0)
+player=None
+players=[]
 
 gx,gy=112,84
 
@@ -190,7 +194,7 @@ def drawBuilding(i,j,player):
     global taillecase
     tile=carte[i][j].tkItem
     tilecos=canevas.coords(tile)
-    draw_gear(canevas, tilecos[0]+taillecase/2, tilecos[1]+taillecase/2, taillecase/3, 4, 5, player.couleur)
+    draw_gear(canevas, tilecos[0]+taillecase/2, tilecos[1]+taillecase/2, taillecase/4, 4, 5, player.couleur)
 
 def showCollectButton(i,j,player):
     location=carte[i][j]
@@ -336,11 +340,6 @@ def draw_gear(canevas, x, y, radius, num_teeth, tooth_size, color):
 
 
 
-for i in range(len(carte)):
-    for j in range(len(carte[i])):
-        item = carte[i][j]
-        canevas.tag_bind(item.tkItem, '<Enter>', lambda event, item=item: on_enter(event, item))
-        canevas.tag_bind(item.tkItem, '<Leave>', lambda event, item=item: on_leave(event, item))
 
 canevas.bind("<MouseWheel>", do_zoom) 
 
@@ -355,19 +354,64 @@ canevas.bind("<B2-Motion>", lambda event: canevas.scan_dragto(event.x, event.y, 
 
 #canevas.config(scrollregion=(0,0,112*taillecase,84*taillecase))
 
+def start_on_enter(event, item):
+    canevas.itemconfig(item.tkItem, outline='red', width = 2)
+    canevas.tag_raise(item.tkItem,"all")
+    #canevas.tag_raise("village")
 
-#temp
-player=projet.Player("lime",None, True)
-village=actions.creer_village(carte[10][10],player, True)
-player.village=village
-capture(10,10,player, True)
-drawVillage(10,10,player,True)
-#temp
+    canevas.bind('<Button-1>', lambda event, item=item : createPlayer(item.coords))
+
+
+def start_on_leave(event, item):
+    canevas.itemconfig(item.tkItem, outline='black', width = 1)
+    canevas.tag_lower(item.tkItem)
+    
+    canevas.unbind('<Button-1>')
+    outlineontop()
+
+def createPlayer(cos):
+    global startpos, player, players
+    couls = ['red', 'blue', 'black', 'yellow', 'purple', 'orange', 'pink', 'brown', 'white']
+    startpos=cos
+    for i in range(len(carte)):
+        for j in range(len(carte[i])):
+            item = carte[i][j]
+            canevas.unbind('<Button-1>')
+            canevas.tag_bind(item.tkItem, '<Enter>', lambda event, item=item: on_enter(event, item))
+            canevas.tag_bind(item.tkItem, '<Leave>', lambda event, item=item: on_leave(event, item))
+    player=projet.Player("lime",None, True)
+    x,y=startpos
+    village=actions.creer_village(carte[x][y],player, True)
+    player.village=village
+    capture(x,y,player, True)
+    drawVillage(x,y,player,True)
+    players.append(player)
+    for i in range(9):
+        players.append(projet.Player(couls[i],None, False))
+        x,y = random.randint(0,111), random.randint(0,83)
+        if carte[x][y].master:
+            continue
+        theirVillage=actions.creer_village(carte[x][y],players[i+1], True)
+        players[i+1].village=theirVillage
+        capture(x,y,players[i+1], True)
+        drawVillage(x,y,players[i+1], True)
+
+
+def startGame():
+    for i in range(len(carte)):
+        for j in range(len(carte[i])):
+            item = carte[i][j]
+            canevas.tag_bind(item.tkItem, '<Enter>', lambda event, item=item: start_on_enter(event, item))
+            canevas.tag_bind(item.tkItem, '<Leave>', lambda event, item=item: start_on_leave(event, item))
+    
+
 
 
 donnees.grid(column=0,row=0,columnspan=2)
 canevas.grid(column=0,row=1)
 panneau.grid(column=1,row=1)
+
+startGame()
 
 win.resizable(False,False)
 win.mainloop()

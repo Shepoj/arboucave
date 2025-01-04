@@ -203,6 +203,8 @@ class Village(Case):
         self.terres.append(terre)
 
 
+
+
 if __name__ == "__main__":
     p1 = Noble()
     p2 = Roturier()
