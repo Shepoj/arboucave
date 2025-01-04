@@ -110,7 +110,8 @@ def capture(i,j,player, init=False):
 def drawVillage(i,j,player,init=False):
     global taillecase
     if not init:
-        actions.creer_village(carte[i][j],player)
+        village=actions.creer_village(carte[i][j],player)
+        village.chef.vassalisation(player.village.chef)
         updateHeader(player)
         for child in panneau.winfo_children():
             if "Construire un village\n(coût 1 ⓐ, 10 ⁂)" in child.cget("text"):
@@ -158,12 +159,18 @@ def showVillageInfo(i,j,player):
     if village in player.fief and villageChief != player.village.chef:
         vassalInfo=tk.Label(panneau, text='Vassal de votre village.', bg='gray')
         vassalInfo.pack(side="top")
-        impotButton=tk.Button(panneau, text="Collecter les impôts\n(coût 1 ⓐ)", command=lambda: villageChief.imposition_seigneur())
+        impotButton=tk.Button(panneau, text="Collecter les impôts\n(coût 1 ⓐ)", command=lambda: impositionSeigneur(villageChief, player))
         impotButton.pack()
         if player.actions<1:
             impotButton.config(state='disabled')
 
-
+def impositionSeigneur(vassal, player):
+    vassal.imposition_seigneur()
+    player.actions-=1
+    updateHeader(player)
+    for child in panneau.winfo_children():
+            if "Collecter les impôts\n(coût 1 ⓐ)" in child.cget("text"):
+                child.destroy()
 
 
 def showVillageButton(i,j,player):
@@ -173,25 +180,25 @@ def showVillageButton(i,j,player):
 def showCaptureButton(i,j,player):
     if not carte[i][j].captured: 
         if j == 0 and i == 0:
-            if carte[i+1][j].master==player.village or carte[i][j+1].master==player.village:
+            if carte[i+1][j].master in player.fief or carte[i][j+1].master in player.fief:
                 captureButton(i, j, player)
         elif j == 0:
-            if carte[i][j + 1].master==player.village or carte[i + 1][j].master==player.village or carte[i - 1][j].master==player.village:
+            if carte[i][j + 1].master in player.fief or carte[i + 1][j].master in player.fief or carte[i - 1][j].master in player.fief:
                 captureButton(i, j, player)
         elif i == 0:
-            if carte[i + 1][j].master==player.village or carte[i][j + 1].master==player.village or carte[i][j - 1].master==player.village:
+            if carte[i + 1][j].master in player.fief or carte[i][j + 1].master in player.fief or carte[i][j - 1].master in player.fief:
                 captureButton(i, j, player)
         elif i == len(carte) - 1 and j == len(carte[i]) - 1:
-            if carte[i - 1][j].master==player.village or carte[i][j - 1].master==player.village:
+            if carte[i - 1][j].master in player.fief or carte[i][j - 1].master in player.fief:
                 captureButton(i, j, player)
         elif i == len(carte) - 1:
-            if carte[i - 1][j].master==player.village or carte[i][j + 1].master==player.village or carte[i][j - 1].master==player.village:
+            if carte[i - 1][j].master in player.fief or carte[i][j + 1].master in player.fief or carte[i][j - 1].master in player.fief:
                 captureButton(i, j, player)
         elif j == len(carte[i]) - 1:
-            if carte[i + 1][j].master==player.village or carte[i][j - 1].master==player.village or carte[i - 1][j].master==player.village:
+            if carte[i + 1][j].master in player.fief or carte[i][j - 1].master in player.fief or carte[i - 1][j].master in player.fief:
                 captureButton(i, j, player)
         else:
-            if carte[i + 1][j].master==player.village or carte[i][j + 1].master==player.village or carte[i][j - 1].master==player.village or carte[i - 1][j].master==player.village:
+            if carte[i + 1][j].master in player.fief or carte[i][j + 1].master in player.fief or carte[i][j - 1].master in player.fief or carte[i - 1][j].master in player.fief:
                 captureButton(i, j, player)
 
 

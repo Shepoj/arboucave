@@ -5,7 +5,7 @@ import noms
 cout_action=0
 
 
-def creer_personne(statut, classe="paysan"):
+def creer_personne(statut, player=None, classe="paysan"):
     nom=random.choice(noms.noms)
     prenom=random.choice(noms.prenoms)
     ev = random.randint(30,80)
@@ -18,7 +18,7 @@ def creer_personne(statut, classe="paysan"):
     elif statut == "ecclesiastique":
         personne = projet.Ecclesiastique(nom_complet,ev,age)
     elif statut == "noble":
-        personne = projet.Noble(nom_complet,ev,age,random.randint(0,100))
+        personne = projet.Noble(nom_complet,ev,age,player)
     return personne
 
 
@@ -30,10 +30,10 @@ def immigration (village,statut) :
     while len(village.habitants) <= village.maxhabitants and i <= 3:
         if statut == "paysan":
             cout_action-=cout_paysan
-            village.habitants.append(creer_personne("paysan"))
+            village.habitants.append(creer_personne("roturier", None,"paysan"))
         else:
             cout_action-=cout_artisan
-            personne=creer_personne("artisan")
+            personne=creer_personne("roturier", None,"artisan")
             village.habitants.append(personne)
             village.argent+=personne.argent
         i+=1
@@ -43,7 +43,6 @@ def vassaliser(seigneur,vassal):
     pass
 
 def construire_eglise(village):
-    cout_action = cout_action - X
     village.hasEglise = True
     village.habitants.append(creer_personne("ecclesiastique"))
 
@@ -52,9 +51,10 @@ def creer_village(zone, player, init = False): #zone est une case
     if not init:
         player.actions -= 1
         player.village.chef.ressources -= 10
-    chef = creer_personne("noble")
+    chef = creer_personne("noble", player)
     village = projet.Village(zone, chef)
     village.habitants = [chef]+[creer_personne("roturier") for i in range(4)]
+    chef.village = village
     zone.type = "village"
     zone.master = village
     player.fief.append(village)
