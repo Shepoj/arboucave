@@ -132,6 +132,7 @@ class Case():
         self.tkItem=tkItem
         self.type=None
         self.built=False
+        
     def capture(self,village):
         self.captured=True
         self.master=village
