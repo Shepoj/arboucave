@@ -62,26 +62,19 @@ class Noble(Personne):
         self.l_vassaux=[]
     def collecte_impots(self):
         for roturier in self.l_roturiers :
-            somme_pay = 10
-            somme_art = 5
-            if roturier.statut == "paysan" :
-                if roturier.ressources == 0 :
-                    self.argent += (roturier.argent - somme_pay )
-                    roturier.argent -= somme_pay 
-                elif roturier.argent == 0 :
-                    self.ressoures += ((0.5) * roturier.ressources)
-                    roturier.ressources -= ((0.5) * roturier.ressources) # a refaire nul
-                else :
-                    roturier.mourir()
-            else :
-                if roturier.ressources == 0 :
-                    self.argent += (roturier.argent - somme_art)
-                    roturier.argent -= somme_art
-                elif roturier.argent == 0 :
-                    self.ressoures += ((0.25) * roturier.ressources)
-                    roturier.ressources -= ((0.25) * roturier.ressources)
-                else :
-                    roturier.mourir()
+            cout= 0.5 if roturier.statut=="paysan" else 0.25
+            if roturier.argent:
+                impot = int(cout*roturier.argent)
+                roturier.argent -= impot
+                self.argent += impot
+            elif roturier.ressources:
+                impot=int(cout*roturier.ressources)
+                roturier.ressources -= impot
+                self.ressources += impot
+            else:
+                roturier.mourir()
+
+
     def distribution_dime(self, ecclesiastique):
         montant_dime= 15
         ecclesiastique.argent += montant_dime
