@@ -131,10 +131,25 @@ class Case():
         self.master=None
         self.tkItem=tkItem
         self.type=None
+        self.built=False
     def capture(self,village):
         self.captured=True
         self.master=village
         self.master.ajoutTerres(self)
+    def collecte(self):
+        if self.master:
+            production=10 if self.terrain=="herbe" else 15 if self.built else 5
+            if self.terrain=="roche":
+                self.master.chef.argent+=production
+            else:
+                self.master.chef.ressources+=production
+    def build(self):
+        if self.master:
+            self.built=True
+            self.master.chef.argent-=25
+            self.master.chef.ressources-=25
+        
+            
         
 class Village(Case):
     def __init__(self, lieu, chef):

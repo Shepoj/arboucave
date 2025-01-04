@@ -70,6 +70,7 @@ def on_click(event):
     showVillageButton(x,y,player)
     showCaptureButton(x,y,player)
     showVillageInfo(x,y,player)
+    showCollectButton(x,y,player)
     
 def updateHeader(player):
     for child in donnees.winfo_children():
@@ -162,6 +163,49 @@ def showVillageInfo(i,j,player):
         impotButton.pack()
         if player.actions<1:
             impotButton.config(state='disabled')
+
+def showBuildButton(i,j,player):
+    location=carte[i][j]
+    if location.master in player.fief and location.type!="village" and not location.built:
+        buildButton=tk.Button(panneau, text="Construire sur cette case\n(coût 25 ⁂, 25 ¤, 1 ⓐ)", command=lambda: location.build())
+        buildButton.pack()
+        if player.actions<1 or player.village.chef.ressources<25 or player.village.chef.argent<25:
+            buildButton.config(state='disabled')
+
+def buildCase(i,j,player):
+    location=carte[i][j]
+    location.build()
+    player.actions-=1
+    updateHeader(player)
+    drawBuilding(i,j,player)
+    for child in panneau.winfo_children():
+            if "Construire sur cette case\n(coût 25 ⁂, 25 ¤, 1 ⓐ)" in child.cget("text"):
+                child.destroy()
+
+def drawBuilding(i,j,player):
+    global taillecase
+    tile=carte[i][j].tkItem
+    tilecos=canevas.coords(tile)
+    if carte[i][j].terrain=="eau":
+        pass
+
+def showCollectButton(i,j,player):
+    location=carte[i][j]
+    if location.master in player.fief and location.type!="village":
+        collectButton=tk.Button(panneau, text="Collecter les ressources\n(coût 2 ⓐ)", command=lambda: collectRessources(i,j,player))
+        collectButton.pack()
+        if player.actions<2:
+            collectButton.config(state='disabled')
+
+def collectRessources(i,j,player):
+    location=carte[i][j]
+    location.collecte()
+    player.actions-=2
+    updateHeader(player)
+    for child in panneau.winfo_children():
+            if "Collecter les ressources\n(coût 2 ⓐ)" in child.cget("text"):
+                child.destroy()
+
 
 def impositionSeigneur(vassal, player):
     vassal.imposition_seigneur()
