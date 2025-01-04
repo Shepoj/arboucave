@@ -2,24 +2,20 @@ import projet
 import random
 import noms
 
+from projet import Personne, Roturier, Soldat, Ecclesiastique, Noble
+
 cout_action=0
 
 
-def creer_personne(statut, player=None, classe="paysan"):
-    nom=random.choice(noms.noms)
-    prenom=random.choice(noms.prenoms)
-    ev = random.randint(30,80)
-    age = random.randint(0,ev)
-    nom_complet=prenom+" "+(nom if statut!="noble" else "de "+nom)
+def creer_personne(statut, paysan = True):
     if statut == "roturier":
-        personne = projet.Roturier(classe,nom_complet,ev,age)
+        return Roturier("paysan" if paysan else "artisan")
     elif statut == "soldat":
-        personne = projet.Soldat(nom_complet,ev,age)
+        return Soldat()
     elif statut == "ecclesiastique":
-        personne = projet.Ecclesiastique(nom_complet,ev,age)
+        return Ecclesiastique()
     elif statut == "noble":
-        personne = projet.Noble(nom_complet,ev,age,player)
-    return personne
+        return Noble()
 
 
 def immigration (village,statut) : 

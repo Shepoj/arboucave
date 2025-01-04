@@ -26,38 +26,36 @@ class Personne():
         self.humeur = 5
 
     def __repr__(self):
-        return self.affiche_nom
+        return self.affiche_nom()
     
     def __str__(self):
-        return self.affiche_nom
+        return self.affiche_nom()
     
-    @property
     def affiche_nom(self) -> str:
         return f"{self.nom} {self.prenom}"
 
     def vieillir(self):
-        self.age+=1
-        if self.age>self.ev:
+        self.age += 1
+        if self.age > self.ev:
             self.mourir()
 
+
 class Roturier(Personne):
-    def __init__(self, statut, nom,ev,age):
-        super().__init__(nom,ev,age)
-        self.statut=statut
-        if statut=="paysan":
-            self.argent=0
-            self.ressources=0
+    def __init__(self, statut, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.statut = statut
+
+        if statut == "paysan":
+            self.argent = 0
+            self.ressources = 0
             self.prod=random.randint(2,5)
         else:  
             self.argent= random.randint(5,30)
-            self.ressources=0
+            self.ressources = 0
             self.prod=random.randint(5,10)
 
-
 class Soldat(Personne):
-    def __init__(self, nom,ev,age):
-        super().__init__(nom,ev,age)
-
+    pass
 
 class Ecclesiastique(Personne):
     def __init__(self, nom,ev,age,argent,):
@@ -67,17 +65,22 @@ class Ecclesiastique(Personne):
 
 
 class Noble(Personne):
-    def __init__(self,nom,ev,age, player=None):
-        super().__init__(nom,ev,age)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.argent=random.randint(10,50)
         self.ressources=random.randint(10,50)
         self.village=None
         self.seigneur=None
-        self.player=player
+        self.player=None
         self.l_vassaux=[]
 
+    def affiche_nom(self):
+        voy = "AEYUIOH"
+        sep = " d'" if self.nom[0] in voy else " de "
+        return f"{self.prenom}{sep}{self.nom}"
+
     def collecte_impots(self):
-        for roturier in self.l_roturiers :
+        for roturier in self.l_roturiers:
 
             cout= 0.5 if roturier.statut=="paysan" else 0.25
             if roturier.argent:
@@ -149,5 +152,5 @@ class Village(Case):
 
 
 if __name__ == "__main__":
-    p = Personne()
+    p = Noble()
     print(p)
