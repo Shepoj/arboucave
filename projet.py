@@ -31,6 +31,7 @@ class Personne():
 
         self.village: Village = None
         self.humeur = 5
+        self.argent = 0
 
     def __repr__(self):
         return f"{self.affiche_nom()} : {self.__class__.__name__}"
@@ -61,6 +62,22 @@ class Roturier(Personne):
             self.ressources = 0
             self.prod=random.randint(5,10)
 
+    def payer_impot(self, noble: Noble):
+        cout = 0.5 if self.statut=="paysan" else 0.25
+        if self.argent > 0:
+            impot = int(cout*self.argent)
+            self.argent += -impot
+            noble.argent += impot
+        elif self.ressources:
+            impot = int(cout*self.ressources)
+            self.ressources += impot
+            noble.ressources += impot
+        else:
+            self.mourir()
+
+    def mourir(self):
+        pass
+
 
 class Soldat(Personne):
     pass
@@ -77,12 +94,14 @@ class Ecclesiastique(Personne):
 class Noble(Personne):
     def __init__(self, player: Player | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.argent=random.randint(10,50)
-        self.ressources=random.randint(10,50)
-        self.village = None
+
+        self.argent = random.randint(10,50)
+        self.ressources = random.randint(10,50)
+
         self.seigneur = None
         self.player = player
-        self.l_vassaux=[]
+        self.l_roturiers: list[Roturier] = []
+        self.l_vassaux: list[Noble] = []
 
     def affiche_nom(self):
         voy = "AEYUIOH"
@@ -91,22 +110,10 @@ class Noble(Personne):
 
     def collecte_impots(self):
         for roturier in self.l_roturiers:
+            roturier.payer_impot(self)
 
-            cout= 0.5 if roturier.statut=="paysan" else 0.25
-            if roturier.argent:
-                impot = int(cout*roturier.argent)
-                roturier.argent -= impot
-                self.argent += impot
-            elif roturier.ressources:
-                impot=int(cout*roturier.ressources)
-                roturier.ressources -= impot
-                self.ressources += impot
-            else:
-                roturier.mourir()
-
-
-    def distribution_dime(self, ecclesiastique):
-        montant_dime= 15
+    def distribution_dime(self, ecclesiastique: Ecclesiastique):
+        montant_dime = 15
         ecclesiastique.argent += montant_dime
         self.argent -= montant_dime
 
@@ -196,8 +203,9 @@ class Village(Case):
         return False
 
     def construire_eglise(self):
-        self.hasEglise = True
-        self.ajout_habitant(self, Ecclesiastique())
+        if not self.hasEglise:
+            if self.ajout_habitant(self, Ecclesiastique()):
+                self.hasEglise = True
  
     def ajoutTerres(self,terre):
         self.terres.append(terre)
