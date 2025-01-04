@@ -1,21 +1,26 @@
+from __future__ import annotations
+
 import random
 from random import randint, choice
 from noms import prenoms, noms
 
 class Player():
-    def __init__(self,couleur,village, j1=False):
+    def __init__(self, couleur, village, j1=False):
         self.couleur=couleur
         self.village=village
         self.fief=[village] if village else []
         self.actions=10
         self.j1=j1
 
+    def etendre_fief(self, village: Village):
+        self.fief.append(village)
+
 
 
 class Personne():
     def __init__(self,
-        prenom = None,
-        nom = None,
+        prenom: str | None = None,
+        nom: str | None = None,
         age: int | None = None,
         ev = randint(30, 80)):
 
@@ -24,11 +29,11 @@ class Personne():
         self.age = randint(0, ev) if age is None else age
         self.ev = ev
 
-        self.village = None
+        self.village: Village = None
         self.humeur = 5
 
     def __repr__(self):
-        return self.affiche_nom()
+        return f"{self.affiche_nom()} : {self.__class__.__name__}"
     
     def __str__(self):
         return self.affiche_nom()
@@ -56,14 +61,17 @@ class Roturier(Personne):
             self.ressources = 0
             self.prod=random.randint(5,10)
 
+
 class Soldat(Personne):
     pass
 
+
 class Ecclesiastique(Personne):
-    def __init__(self, nom,ev,age,argent):
-        super().__init__(nom,ev,age)
-        self.argent=argent
-        self.don=random.choice(["prod","vie","humeur","guerre"])
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.argent = 0 # pas defini avant
+        self.don = choice(["prod","vie","humeur","guerre"])
 
 
 class Noble(Personne):
@@ -102,7 +110,7 @@ class Noble(Personne):
         ecclesiastique.argent += montant_dime
         self.argent -= montant_dime
 
-    def vassalisation(self,seigneur):
+    def vassalisation(self, seigneur):
         self.seigneur=seigneur
         seigneur.l_vassaux.append(self)
         seigneur.player.fief.append(self.village)
@@ -124,7 +132,7 @@ class Noble(Personne):
 
         
 class Case():
-    def __init__(self,coords,tkItem,terrain):
+    def __init__(self, coords, tkItem, terrain):
         self.coords=coords
         self.terrain=terrain
         self.captured=False
@@ -137,6 +145,7 @@ class Case():
         self.captured=True
         self.master=village
         self.master.ajoutTerres(self)
+
     def collecte(self):
         if self.master:
             production=10 if self.terrain=="herbe" else 15 if self.built else 5
@@ -144,6 +153,7 @@ class Case():
                 self.master.chef.argent+=production
             else:
                 self.master.chef.ressources+=production
+
     def build(self):
         if self.master:
             self.built=True
@@ -153,33 +163,48 @@ class Case():
             
         
 class Village(Case):
-    def __init__(self, lieu, player = None):
+    def __init__(self, case: Case, player: Player):
         self.type="village"
 
-        self.habitants = []
+        self.lieu = case
+        self.coords = case.coords
+        self.terres = [case.coords]
 
+        self.habitants = []
         self.chef = Noble(player)
         self.ajout_habitant(self.chef)
         for _ in range(4):
             self.ajout_habitant(Roturier())
-
+        
         self.hasEglise = False
-        self.lieu = lieu
-        self.coords = lieu.coords
-        self.terres = [lieu.coords]
         self.armee = 0
-        self.maxHabitants = len(self.terres)*20
         self.vassaux = []
 
+        case.type = "village"
+        case.master = self
+        player.etendre_fief(self)
+
+    @property
+    def max_habitants(self):
+        return 20 * len(self.terres)
+
+    def ajout_habitant(self, arrivant: Personne):
+        if len(self.habitants) < self.max_habitants:
+            self.habitants.append(arrivant)
+            arrivant.village = self
+            return True
+        return False
+
+    def construire_eglise(self):
+        self.hasEglise = True
+        self.ajout_habitant(self, Ecclesiastique())
+ 
     def ajoutTerres(self,terre):
         self.terres.append(terre)
 
-    def ajout_habitant(self, arrivant: Personne):
-        self.habitants.append(arrivant)
-        arrivant.village = self
-
 
 if __name__ == "__main__":
-    p = Personne()
-    p2 = Personne()
-    print(p, p2)
+    p1 = Noble()
+    p2 = Roturier()
+    print(repr(p1))
+    print(repr(p2))

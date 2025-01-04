@@ -153,10 +153,10 @@ def showVillageInfo(i,j,player):
     if village==None:
         return
     villageChief=carte[i][j].master.chef
-    villageInfo=tk.Label(panneau, text='Chef : '+villageChief.affiche_nom(), bg='gray')
+    villageInfo=tk.Label(panneau, text='Chef : ' + villageChief.affiche_nom(), bg='gray')
     villageInfo.pack(side="top")
     if villageChief == player.village.chef:
-        villageInfo.config(text='Chef : '+villageChief.affiche_nom()+'\n(votre village)')
+        villageInfo.config(text='Chef : ' + villageChief.affiche_nom() + '\n(votre village)')
     if village.hasEglise:
         egliseInfo=tk.Label(panneau, text='Le village possède une église.', bg='gray')
         egliseInfo.pack(side="top")

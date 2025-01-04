@@ -1,13 +1,8 @@
-import projet
 import random
-import noms
-
-from projet import Personne, Roturier, Soldat, Ecclesiastique, Noble, Village
-
-cout_action=0
+from projet import Player, Roturier, Soldat, Ecclesiastique, Noble, Village
 
 
-def creer_personne(statut: str, player = None, paysan = True):
+def creer_personne(statut: str, player = None):
     if statut == "roturier":
         return Roturier()
     elif statut == "soldat":
@@ -18,31 +13,31 @@ def creer_personne(statut: str, player = None, paysan = True):
         return Noble(player)
 
 
-def immigration (village,statut) : 
-    i=0
-    while i<3 and len(village.habitants)<village.maxHabitants:
-        pass
-        
+def immigration(village: Village, paysan = True):
+    for _ in range(3):
+        resultat = village.ajout_habitant(Roturier(paysan))
+        if not resultat:
+            print("Un habitant n'a pas pu être ajouté")
+ 
+
+def construire_eglise(village: Village):
+    village.construire_eglise()
+
 
 def vassaliser(seigneur,vassal):
     pass
 
-def construire_eglise(village):
-    village.hasEglise = True
-    village.habitants.append(creer_personne("ecclesiastique"))
 
-
-def creer_village(zone, player, init = False): #zone est une case
+def creer_village(case, player: Player, init = False): #zone est une case
     if not init:
-        player.actions -= 1
-        player.village.chef.ressources -= 10
+        player.actions += -1
+        player.village.chef.ressources += -10
 
-    village = Village(zone, player)
-    zone.type = "village"
-    zone.master = village
-    player.fief.append(village)
-    
-    return village
+    return Village(case, player)
+
+
+def collecte_impots():
+    pass
 
 
 def tourSuivant():
