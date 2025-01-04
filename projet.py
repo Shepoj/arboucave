@@ -35,6 +35,8 @@ class Player():
         self.fief.append(village)
 
     def vaincre(self, vaincu: Player):
+        for village in vaincu.fief:
+            village.chef.player = self
         self.fief += vaincu.fief
         vaincu.fief = []
 
@@ -170,8 +172,8 @@ class Noble(Personne):
 
         
 class Case():
-    def __init__(self, coords, tkItem, terrain):
-        self.coords=coords
+    def __init__(self, coords: tuple[int, int], tkItem, terrain):
+        self.coords = coords
         self.terrain=terrain
         self.captured=False
         self.master=None

@@ -71,7 +71,7 @@ def guerre(player: Player, cible: Player):
     score = 0
 
     for i, j in zip(player.ordre, cible.ordre):
-        victoire, pertes = bataille(allie, ennemi, pfc(i, j))
+        victoire, pertes = bataille(allie[i], ennemi[i], pfc(i, j))
         if victoire:
             score += 1
             player.mort_soldats(pertes)
