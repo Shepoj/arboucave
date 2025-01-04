@@ -2,6 +2,7 @@ import tkinter as tk
 import perlin
 import projet
 import actions
+import math
 
 
 shape = (0.3,0.3)
@@ -70,6 +71,8 @@ def on_click(event):
     showVillageButton(x,y,player)
     showCaptureButton(x,y,player)
     showVillageInfo(x,y,player)
+    showCollectButton(x,y,player)
+    showBuildButton(x,y,player)
     
 def updateHeader(player):
     for child in donnees.winfo_children():
@@ -115,6 +118,8 @@ def drawVillage(i,j,player,init=False):
         updateHeader(player)
         for child in panneau.winfo_children():
             if "Construire un village\n(coût 1 ⓐ, 10 ⁂)" in child.cget("text"):
+                child.destroy()
+            elif "Collecter les ressources\n(coût 2 ⓐ)" in child.cget("text"):
                 child.destroy()
     tile=carte[i][j].tkItem
     tilecos=canevas.coords(tile)
@@ -162,6 +167,48 @@ def showVillageInfo(i,j,player):
         impotButton.pack()
         if player.actions<1:
             impotButton.config(state='disabled')
+
+def showBuildButton(i,j,player):
+    location=carte[i][j]
+    if location.master in player.fief and location.type!="village" and not location.built:
+        buildButton=tk.Button(panneau, text="Construire sur cette case\n(coût 25 ⁂, 25 ¤, 1 ⓐ)", command=lambda: buildCase(i,j,player))
+        buildButton.pack()
+        if player.actions<1 or player.village.chef.ressources<25 or player.village.chef.argent<25:
+            buildButton.config(state='disabled')
+
+def buildCase(i,j,player):
+    location=carte[i][j]
+    location.build()
+    player.actions-=1
+    updateHeader(player)
+    drawBuilding(i,j,player)
+    for child in panneau.winfo_children():
+            if "Construire sur cette case\n(coût 25 ⁂, 25 ¤, 1 ⓐ)" in child.cget("text"):
+                child.destroy()
+
+def drawBuilding(i,j,player):
+    global taillecase
+    tile=carte[i][j].tkItem
+    tilecos=canevas.coords(tile)
+    draw_gear(canevas, tilecos[0]+taillecase/2, tilecos[1]+taillecase/2, taillecase/3, 6, 5, player.couleur)
+
+def showCollectButton(i,j,player):
+    location=carte[i][j]
+    if location.master in player.fief and location.type!="village":
+        collectButton=tk.Button(panneau, text="Collecter les ressources\n(coût 2 ⓐ)", command=lambda: collectRessources(i,j,player))
+        collectButton.pack()
+        if player.actions<2:
+            collectButton.config(state='disabled')
+
+def collectRessources(i,j,player):
+    location=carte[i][j]
+    location.collecte()
+    player.actions-=2
+    updateHeader(player)
+    for child in panneau.winfo_children():
+            if "Collecter les ressources\n(coût 2 ⓐ)" in child.cget("text"):
+                child.destroy()
+
 
 def impositionSeigneur(vassal, player):
     vassal.imposition_seigneur()
@@ -241,9 +288,10 @@ def do_zoom_in(event):
     global taillecase
     x = canevas.canvasx(event.x)
     y = canevas.canvasy(event.y)
-    factor = 1.1
-    taillecase=taillecase*factor
-    canevas.scale(tk.ALL, x, y, factor, factor) #https://stackoverflow.com/questions/48112492/canvas-scale-only-size-but-not-coordinates html
+    if taillecase<=70:
+        factor = 1.1
+        taillecase=taillecase*factor
+        canevas.scale(tk.ALL, x, y, factor, factor) #https://stackoverflow.com/questions/48112492/canvas-scale-only-size-but-not-coordinates html
     
 
 def do_zoom_out(event):
@@ -257,6 +305,36 @@ def do_zoom_out(event):
 
 def test(event):
     print(canevas.canvasx(event.x),canevas.canvasy(event.y))
+
+
+
+
+def draw_gear(canevas, x, y, radius, num_teeth, tooth_size, color):
+    canevas.create_oval(x - radius, y - radius, x + radius, y + radius, outline="black", width=2, fill=color)
+    angle_step = 360 / num_teeth
+    print('aaaa')
+    for i in range(num_teeth):
+        angle = math.radians(i * angle_step)
+        next_angle = math.radians((i + 1) * angle_step)
+        inner_x1 = x + radius * math.cos(angle)
+        inner_y1 = y + radius * math.sin(angle)
+        inner_x2 = x + radius * math.cos(next_angle)
+        inner_y2 = y + radius * math.sin(next_angle)
+        outer_x1 = x + (radius + tooth_size) * math.cos(angle)
+        outer_y1 = y + (radius + tooth_size) * math.sin(angle)
+        outer_x2 = x + (radius + tooth_size) * math.cos(next_angle)
+        outer_y2 = y + (radius + tooth_size) * math.sin(next_angle)
+        canevas.create_polygon(inner_x1, inner_y1, outer_x1, outer_y1, outer_x2, outer_y2, inner_x2, inner_y2, fill=color, outline="black")
+
+
+
+
+
+
+
+
+
+
 
 for i in range(len(carte)):
     for j in range(len(carte[i])):
