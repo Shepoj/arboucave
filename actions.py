@@ -65,12 +65,12 @@ def bataille(allie: int, ennemi: int, avantage: bool):
             return True, allie - 2*ennemi
         return False, ennemi - allie//2
 
-def guerre(player: Player, cible: Player, part: tuple[int, int, int], ordre: list[int]):
-    allie = strategie(player.armee, part)
+def guerre(player: Player, cible: Player):
+    allie = strategie(player.armee, player.part)
     ennemi = strategie(cible.armee, cible.part)
     score = 0
 
-    for i, j in zip(ordre, cible.ordre):
+    for i, j in zip(player.ordre, cible.ordre):
         victoire, pertes = bataille(allie, ennemi, pfc(i, j))
         if victoire:
             score += 1
