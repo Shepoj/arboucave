@@ -14,6 +14,96 @@ class Player():
 
     def etendre_fief(self, village: Village):
         self.fief.append(village)
+    
+
+    def botCapture(self, carte):
+        border_tiles = []
+        for village in self.fief:
+            for terre in village.terres:
+                x, y = terre.coords
+                neighbors = []
+                if x > 0:
+                    neighbors.append((x-1, y))
+                if x < 82:
+                    neighbors.append((x+1, y))
+                if y > 0:
+                    neighbors.append((x, y-1))
+                if y < 110:
+                    neighbors.append((x, y+1))
+                neighbors=set(neighbors)
+                for nx, ny in neighbors:
+                    if (nx, ny) not in village.terres:
+                        border_tiles.append((nx, ny))
+
+        if border_tiles:
+            target_tile = choice(border_tiles)
+            return target_tile
+        
+
+    def botCollecte(self):
+        terres = []
+        for village in self.fief:
+            for terre in village.terres:
+                terres.append(terre)
+        if terres:
+            target_tile = choice(terres)
+            target_tile.collecte()
+            return 1
+        return 0
+    
+
+    def botBuild(self):
+        unbuilt = []
+        for village in self.fief:
+            for terre in village.terres:
+                if not terre.built and terre.type != "village":
+                    unbuilt.append(terre)
+        if unbuilt:
+            target_tile = choice(unbuilt)
+            return target_tile
+        return 0
+    
+
+    def botConstruireEglise(self):
+        unholy = []
+        for village in self.fief:
+            if not village.hasEglise:
+                unholy.append(village)
+        if unholy:  
+            target_village = choice(unholy)
+            return target_village
+        return 0
+    
+    def botCreerVillage(self, carte):
+        villageable = []
+        for village in self.fief:
+            for terre in village.terres:
+                if terre.type != "village":
+                    i,j=terre.coords
+                    gx,gy=len(carte),len(carte[0])
+                    minx,miny=max(0,i-2),max(0,j-2)
+                    maxx,maxy=min(gx,i+3),min(gy,j+3)
+                    isVillage=False
+                    for x in range(minx,maxx):
+                        for y in range(miny,maxy):
+                            if carte[x][y].type=="village":
+                                isVillage=True
+                    if not isVillage:
+                        villageable.append(terre)
+        if villageable:
+            target_tile = choice(villageable)
+            return target_tile
+        return 0
+    
+    def botCollecteImpots(self):
+        villages = []
+        for village in self.fief:
+            if village != self.village:
+                villages.append(village)
+        if villages:
+            target_village = choice(villages)
+            village.chef.imposition_seigneur()
+            return 1
 
 
 
@@ -176,7 +266,7 @@ class Village(Case):
 
         self.lieu = case
         self.coords = case.coords
-        self.terres = [case.coords]
+        self.terres = [case]
 
         self.habitants: list[Personne] = []
         self.chef = Noble(player)
@@ -221,7 +311,6 @@ class Village(Case):
         for habitant in self.habitants:
             info += f"{repr(habitant)}\n"
         return info
-
 
 
 

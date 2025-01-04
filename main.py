@@ -13,6 +13,7 @@ res = (84,112)
 startpos=(0,0)
 player=None
 players=[]
+playing=0
 
 gx,gy=112,84
 
@@ -79,16 +80,18 @@ def on_click(event):
     showVillageInfo(x,y,player)
     showCollectButton(x,y,player)
     showBuildButton(x,y,player)
+    showEndTurnButton()
     
 def updateHeader(player):
-    for child in donnees.winfo_children():
-        child.destroy()
-    money=tk.Label(donnees, text='Argent: '+str(player.village.chef.argent) + " ¤      ", bg='gray')
-    money.pack(side="left")
-    ressources=tk.Label(donnees, text='Ressources: '+str(player.village.chef.ressources) + " ⁂", bg='gray')
-    ressources.pack(side="left")
-    ptAction=tk.Label(donnees, text='Points d\'action: '+str(player.actions) + " ⓐ", bg='gray')
-    ptAction.pack(side="right")
+    if player.j1:
+        for child in donnees.winfo_children():
+            child.destroy()
+        money=tk.Label(donnees, text='Argent: '+str(player.village.chef.argent) + " ¤      ", bg='gray')
+        money.pack(side="left")
+        ressources=tk.Label(donnees, text='Ressources: '+str(player.village.chef.ressources) + " ⁂", bg='gray')
+        ressources.pack(side="left")
+        ptAction=tk.Label(donnees, text='Points d\'action: '+str(player.actions) + " ⓐ", bg='gray')
+        ptAction.pack(side="right")
     
 def outlineontop():
     pass
@@ -110,10 +113,11 @@ def capture(i,j,player, init=False):
     if not init:
         player.actions-=1
     updateCapturedOutline(player.couleur)
-    updateHeader(player)
-    for child in panneau.winfo_children():
-            if "Annexer cette case\n(coût 1 ⓐ)" in child.cget("text"):
-                child.destroy()
+    if player.j1:
+        updateHeader(player)
+        for child in panneau.winfo_children():
+                if "Annexer cette case\n(coût 1 ⓐ)" in child.cget("text"):
+                    child.destroy()
     
 
 def drawVillage(i,j,player,init=False):
@@ -200,7 +204,7 @@ def drawBuilding(i,j,player):
     global taillecase
     tile=carte[i][j].tkItem
     tilecos=canevas.coords(tile)
-    draw_gear(canevas, tilecos[0]+taillecase/2, tilecos[1]+taillecase/2, taillecase/4, 4, 5, player.couleur)
+    draw_gear(canevas, tilecos[0]+taillecase/2, tilecos[1]+taillecase/2, taillecase/4, 4, taillecase/5, player.couleur)
 
 def showCollectButton(i,j,player):
     location=carte[i][j]
@@ -232,6 +236,10 @@ def impositionSeigneur(vassal, player):
 def showVillageButton(i,j,player):
     if carte[i][j].master==player.village:
         villageButton(i,j,player)
+
+def showEndTurnButton():
+    endTurnButton=tk.Button(panneau, text="Fin de tour", command=endTurns)
+    endTurnButton.pack(side='bottom')
 
 def showCaptureButton(i,j,player):
     if not carte[i][j].captured: 
@@ -377,7 +385,7 @@ def start_on_leave(event, item):
 
 def createPlayer(cos):
     global startpos, player, players
-    couls = ['red', 'blue', 'black', 'yellow', 'purple', 'orange', 'pink', 'brown', 'white']
+    couls = ['red', 'sky blue', 'black', 'yellow', 'purple', 'orange', 'pink', 'brown', 'white']
     startpos=cos
     for i in range(len(carte)):
         for j in range(len(carte[i])):
@@ -401,6 +409,7 @@ def createPlayer(cos):
         players[i+1].village=theirVillage
         capture(x,y,players[i+1], True)
         drawVillage(x,y,players[i+1], True)
+    newTurn()
 
 
 def startGame():
@@ -410,6 +419,71 @@ def startGame():
             canevas.tag_bind(item.tkItem, '<Enter>', lambda event, item=item: start_on_enter(event, item))
             canevas.tag_bind(item.tkItem, '<Leave>', lambda event, item=item: start_on_leave(event, item))
     
+
+def newTurn():
+    global playing
+    playing=0
+    fun = random.randint(0,100)
+    actions.doEvent(fun)
+    random.shuffle(players)
+    while playing<len(players):
+        actions.collecte_impots(players[playing])
+        players[playing].actions=10
+        if players[playing].j1:
+            return
+        play(players[playing])
+        updateCapturedOutline(players[playing].couleur)
+        playing+=1
+            
+def endTurns():
+    global playing
+    for child in panneau.winfo_children():
+        child.destroy()
+    playing+=1
+    while playing<len(players):
+        actions.collecte_impots(players[playing])
+        play(players[playing])
+        updateCapturedOutline(players[playing].couleur)
+        playing+=1
+    newTurn()
+
+def play(bot):
+    all_actions = ['capture', 'collecte', 'build', 'construire_eglise', 'vassaliser', 'creer_village', 'collecte_impots']
+    while bot.actions > 0:
+        action = random.choice(all_actions)
+        if action == 'capture' and bot.actions>=1:
+            cos=bot.botCapture(carte)
+            if cos:
+                x,y=cos
+                capture(x,y,bot)
+        elif action == 'collecte' and bot.actions>=2:
+            if bot.botCollecte():
+                bot.actions -= 2
+        elif action == 'build' and bot.actions>=1 and bot.village.chef.ressources>=25 and bot.village.chef.argent>=25:
+            buildTile = bot.botBuild()
+            if buildTile:
+                x, y = buildTile.coords
+                buildCase(x, y, bot)
+        elif action == 'construire_eglise':
+            bot.botConstruireEglise() #a faire bien
+            bot.actions -= 1
+        elif action == 'creer_village' and bot.actions>=1 and bot.village.chef.ressources>=10: 
+            villageloc = bot.botCreerVillage(carte)
+            if villageloc:
+                x, y = villageloc.coords
+                drawVillage(x, y, bot)
+        elif action == 'collecte_impots' and bot.actions>=1:
+            bot.botCollecteImpots()
+            bot.actions -= 1
+        else:
+            continue
+    
+
+
+
+
+
+
 
 
 
