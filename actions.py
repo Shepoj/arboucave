@@ -29,12 +29,12 @@ def vassaliser(seigneur,vassal):
     pass
 
 
-def creer_village(case: Case, player: Player, draw, init = False):
+def creer_village(case: Case, player: Player, init = False):
     if not init:
         player.actions += -1
         player.village.chef.ressources += -10
 
-    return Village(case, player, draw)
+    return Village(case, player)
 
 
 def collecte_impots(player: Player):
