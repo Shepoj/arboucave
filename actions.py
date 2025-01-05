@@ -1,5 +1,6 @@
-import random
-from projet import Player, Roturier, Soldat, Ecclesiastique, Noble, Village
+from typing import Callable
+
+from projet import Player, Roturier, Soldat, Ecclesiastique, Noble, Case, Village
 
 
 def creer_personne(statut: str, player = None):
@@ -28,12 +29,12 @@ def vassaliser(seigneur,vassal):
     pass
 
 
-def creer_village(case, player: Player, init = False): #zone est une case
+def creer_village(case: Case, player: Player, draw, init = False):
     if not init:
         player.actions += -1
         player.village.chef.ressources += -10
 
-    return Village(case, player)
+    return Village(case, player, draw)
 
 
 def collecte_impots(player: Player):

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Callable
 
 import random
 from random import randint, shuffle, choice
@@ -262,17 +263,19 @@ class Noble(Personne):
 
         
 class Case():
-    def __init__(self, coords: tuple[int, int], tkItem, terrain):
+    def __init__(self, coords: tuple[int, int], tkItem, terrain: str):
         self.coords = coords
         self.terrain=terrain
-        self.captured=False
         self.master=None
         self.tkItem=tkItem
         self.type=None
         self.built=False
+
+    @property
+    def captured(self):
+        return self.master is not None
         
     def capture(self,village):
-        self.captured=True
         self.master=village
         self.master.ajoutTerres(self)
 
@@ -291,9 +294,10 @@ class Case():
             self.master.chef.ressources-=25
         
             
-        
-class Village(Case):
-    def __init__(self, case: Case, player: Player):
+
+# je pense pas que ça doive heriter
+class Village():
+    def __init__(self, case: Case, player: Player, draw: Callable[[Village], int]):
         self.type="village"
 
         self.lieu = case
@@ -312,6 +316,9 @@ class Village(Case):
         case.type = "village"
         case.master = self
         player.etendre_fief(self)
+
+        self._draw = draw
+        self.tk_item = self.redraw()
 
     @property
     def max_habitants(self):
@@ -345,6 +352,10 @@ class Village(Case):
         for habitant in self.habitants:
             info += f"{repr(habitant)}\n"
         return info
+    
+
+    def redraw(self):
+        return self._draw(self)
 
 
 

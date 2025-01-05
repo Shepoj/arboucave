@@ -5,12 +5,13 @@ import actions
 import math
 import random
 
-from projet import Player, Village
+from projet import Player, Case, Village
 from actions import guerre
+from divers import argmax
 
 
-shape = (0.3,0.3)
-res = (84,112)
+#shape = (0.3,0.3)
+#res = (84,112)
 startpos=(0,0)
 player=None
 players=[]
@@ -18,7 +19,7 @@ playing=0
 
 gx,gy=112,84
 
-perlin_noise = perlin.generate_perlin_grid(84,112,16, 1.5)
+perlin_noise: list[list[float]] = perlin.generate_perlin_grid(84,112,16, 1.5)
 #perlin_noise = perlin.perlinGrid(-shape[0], -shape[1], shape[0], shape[1], res[0], res[1])
 
 
@@ -33,24 +34,54 @@ donnees.pack_propagate(False)
 
 
 taillecase = 35
-carte = []
 
-for i in range(len(perlin_noise)):
-    carte.append([])
-    for j in range(len(perlin_noise[i])):
-        
-        couleur = max(0, min(255, int((perlin_noise[i][j]+0.5)*255)))
-        test = canevas.create_rectangle(i*taillecase, j*taillecase, i*taillecase+taillecase, j*taillecase+taillecase, fill='gray' if couleur < 32 else 'green' if couleur < 210 else 'blue', outline='black')
-        terrain = 'roche' if couleur < 32 else 'herbe' if couleur < 210 else 'eau'
-        if couleur < 32:
-            canevas.itemconfig(test, tags=['roche'])
-        elif couleur < 210:
-            canevas.itemconfig(test, tags=['herbe'])
-        else:
-            canevas.itemconfig(test, tags=['eau'])
-        tile=projet.Case((i,j),test,terrain)
-        carte[i].append(tile)
+def genere_carte(bruit: list[list[float]], seuils: dict[int, tuple[str, str]]):
+    carte: list[list[Case]] = []
 
+    for i in range(len(bruit)):
+        ligne = []
+        for j in range(len(bruit[i])):
+            elevation = max(0, min(255, int((bruit[i][j]+0.5)*255)))
+
+            terrain, couleur = argmax(seuils)
+            for seuil in seuils:
+                if elevation < seuil:
+                    terrain, couleur = seuils[seuil]
+                    break
+
+
+            case = canevas.create_rectangle(i*taillecase, j*taillecase, i*taillecase+taillecase, j*taillecase+taillecase, tags=terrain, fill=couleur, outline='black')
+            case = Case((i, j), case, terrain)
+            ligne.append(case)
+        carte.append(ligne)
+
+    return carte
+
+
+seuils = {}
+seuils[32] = ("roche", "gray")
+seuils[210] = ("herbe", "green")
+seuils[1_000] = ("eau", "blue")
+
+carte = genere_carte(perlin_noise, seuils)
+
+#    carte = []
+#  
+#    for i in range(len(perlin_noise)):
+#        carte.append([])
+#        for j in range(len(perlin_noise[i])):
+#
+#            couleur = max(0, min(255, int((perlin_noise[i][j]+0.5)*255)))
+#            test = canevas.create_rectangle(i*taillecase, j*taillecase, i*taillecase+taillecase, j*taillecase+taillecase, fill='gray' if couleur < 32 else 'green' if couleur < 210 else 'blue', outline='black')
+#            terrain = 'roche' if couleur < 32 else 'herbe' if couleur < 210 else 'eau'
+#            if couleur < 32:
+#                canevas.itemconfig(test, tags=['roche'])
+#            elif couleur < 210:
+#                canevas.itemconfig(test, tags=['herbe'])
+#            else:
+#                canevas.itemconfig(test, tags=['eau'])
+#            tile=projet.Case((i,j),test,terrain)
+#            carte[i].append(tile)
 
 
 def on_enter(event, item):
@@ -119,12 +150,19 @@ def capture(i,j,player, init=False):
         for child in panneau.winfo_children():
                 if "Annexer cette case\n(coût 1 ⓐ)" in child.cget("text"):
                     child.destroy()
-    
+
+
+# sépare de la logique
+def draw_village(village: Village):
+    i, j = village.coords
+    tilecos = canevas.coords(carte[i][j].tkItem)
+    return canevas.create_polygon((tilecos[0]+taillecase/2),(tilecos[1]+taillecase/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*2/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*2/6), outline='black',fill=village.chef.player.couleur,tags=["village"])
+
 
 def drawVillage(i,j,player,init=False):
     global taillecase
     if not init:
-        village=actions.creer_village(carte[i][j],player)
+        village=actions.creer_village(carte[i][j],player, draw_village)
         village.chef.vassalisation(player.village.chef)
         updateHeader(player)
         for child in panneau.winfo_children():
@@ -134,7 +172,7 @@ def drawVillage(i,j,player,init=False):
                 child.destroy()
     tile=carte[i][j].tkItem
     tilecos=canevas.coords(tile)
-    canevas.create_polygon((tilecos[0]+taillecase/2),(tilecos[1]+taillecase/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*2/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*2/6), outline='black',fill=player.couleur,tags=["village"])
+    return canevas.create_polygon((tilecos[0]+taillecase/2),(tilecos[1]+taillecase/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*2/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*2/6), outline='black',fill=player.couleur,tags=["village"])
 
 def captureButton(i,j,player):
     bouton=tk.Button(panneau, text="Annexer cette case\n(coût 1 ⓐ)", command=lambda: capture(i,j,player))
@@ -415,7 +453,7 @@ def createPlayer(cos):
             canevas.tag_bind(item.tkItem, '<Leave>', lambda event, item=item: on_leave(event, item))
     player=projet.Player("lime",None, True)
     x,y=startpos
-    village=actions.creer_village(carte[x][y],player, True)
+    village=actions.creer_village(carte[x][y],player, draw_village, True)
     player.village=village
     capture(x,y,player, True)
     drawVillage(x,y,player,True)
@@ -425,7 +463,7 @@ def createPlayer(cos):
         x,y = random.randint(0,111), random.randint(0,83)
         if carte[x][y].master:
             continue
-        theirVillage=actions.creer_village(carte[x][y],players[i+1], True)
+        theirVillage=actions.creer_village(carte[x][y],players[i+1], draw_village, True)
         players[i+1].village=theirVillage
         capture(x,y,players[i+1], True)
         drawVillage(x,y,players[i+1], True)
