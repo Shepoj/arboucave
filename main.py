@@ -5,9 +5,11 @@ import actions
 import math
 import random
 
+from typing import Callable, Any
+
 from projet import Player, Case, Village
-from actions import guerre
-from divers import argmax
+from actions import guerre, creer_village
+from divers import argmax, bouton_autodestruction, l_bouton_autodestruction
 
 from config import *
 
@@ -17,7 +19,6 @@ from config import *
 startpos=(0,0)
 player=None
 players=[]
-villages: list[Village] = []
 playing=0
 
 gx,gy=112,84
@@ -64,9 +65,8 @@ carte = genere_carte(perlin_noise, seuils)
 def on_enter(event, item):
     canevas.itemconfig(item.tkItem, outline='red', width = 2)
     canevas.tag_raise(item.tkItem,"all")
-    #canevas.tag_raise("village")
 
-    canevas.bind('<Button-1>', lambda event, item=item : on_click(item.coords))
+    canevas.bind('<Button-1>', lambda event: on_click(item.coords))
 
 
 def on_leave(event, item):
@@ -74,36 +74,35 @@ def on_leave(event, item):
     canevas.tag_lower(item.tkItem)
     
     canevas.unbind('<Button-1>')
-    outlineontop()
 
-def on_click(event):
-    global player
+def on_click(coords: tuple[int, int]):
     for child in panneau.winfo_children():
         child.destroy()
-    x = event[0]
-    y = event[1]
-    squareData=tk.Label(panneau, text='Case '+str(x)+', '+str(y), bg='gray')
-    squareData.pack(side="top")
-    showVillageButton(x,y,player)
-    showCaptureButton(x,y,player)
-    showVillageInfo(x,y,player)
-    showCollectButton(x,y,player)
-    showBuildButton(x,y,player)
-    showEndTurnButton()
     
-def updateHeader(player):
+    x, y = coords
+    squareData=tk.Label(panneau, text=f'Case {x}, {y}', bg='gray')
+    squareData.pack(side="top")
+
+    showVillageInfo(x,y,player)
+    showVillageButton(x, y, player)
+
+    showCaptureButton(x,y,player)
+    #showCollectButton(x,y,player)
+    #showBuildButton(x,y,player)
+    #showEndTurnButton()
+    
+def updateHeader(player: Player):
     if player.j1:
         for child in donnees.winfo_children():
             child.destroy()
-        money=tk.Label(donnees, text='Argent: '+str(player.village.chef.argent) + " ¤      ", bg='gray')
+
+        money=tk.Label(donnees, text=f"      Argent: {player.village.chef.argent} ¤      ", bg='gray')
         money.pack(side="left")
-        ressources=tk.Label(donnees, text='Ressources: '+str(player.village.chef.ressources) + " ⁂", bg='gray')
+        ressources=tk.Label(donnees, text=f"Ressources: {player.village.chef.ressources} ⁂", bg='gray')
         ressources.pack(side="left")
-        ptAction=tk.Label(donnees, text='Points d\'action: '+str(player.actions) + " ⓐ", bg='gray')
+        ptAction=tk.Label(donnees, text=f"Points d\'action: {player.actions} ⓐ      ", bg='gray')
         ptAction.pack(side="right")
     
-def outlineontop():
-    pass
         
 def capture(i,j,player, init=False):
     coul = canevas.itemcget(carte[i][j].tkItem, 'fill')
@@ -150,73 +149,71 @@ def captureButton(i,j,player):
     if player.actions<1:
         bouton.config(state='disabled')
 
-def villageButton(i: int, j: int, player: Player):
+    
+def showVillageButton(i: int, j: int, player: Player):
     case=carte[i][j]
-    #minx,miny=max(0,i-2),max(0,j-2)
-    #maxx,maxy=min(gx,i+3),min(gy,j+3)
-    isVillage = carte[i][j].type == "village"
-    #for x in range(minx,maxx):
-    #    for y in range(miny,maxy):
-    #        if carte[x][y].type=="village":
-    #            isVillage=True
+    minx,miny=max(0,i-2),max(0,j-2)
+    maxx,maxy=min(gx,i+3),min(gy,j+3)
+    aucun_village = True
 
-    if not isVillage and carte[i][j].master in player.fief:
-        bouton=tk.Button(panneau, text="Construire un village\n(coût 1 ⓐ, 10 ⁂)", 
-            command=lambda: villages.append(Village(case, player)))
+    for x in range(minx,maxx):
+        for y in range(miny,maxy):
+            if carte[x][y].type=="village":
+                aucun_village = False
+                break
+
+    if aucun_village and case.master is not None and case.master in player.fief:
+        bouton = bouton_autodestruction("Construire un village\n(coût 1 ⓐ, 10 ⁂)", lambda: Village(case, player))
         bouton.pack()
+        print("???")
 
-        if player.actions<1 or player.village.chef.ressources<10:
-            bouton.config(state='disabled')
-            
+        if player.actions < 1 or player.village.chef.ressources < 10:
+          bouton.config(state='disabled')
 
 
-def repeindre_villages(villages: list[Village]):
-    print("repeindre")
-    for village in villages:
-        drawVillage(*village.coords, village.chef.player, True)
 
-def showVillageInfo(i,j,player: Player):
+def showVillageInfo(i: int, j: int, player: Player):
     village=carte[i][j].master
-    if village==None:
+    if village is None:
         return
+    
     for child in panneau.winfo_children():
         child.destroy()
-    villageChief=carte[i][j].master.chef
-    villageInfo=tk.Label(panneau, text='Chef : ' + villageChief.affiche_nom(), bg='gray')
+    
+    villageInfo=tk.Label(panneau, text=f"Chef : {village.chef}", bg='gray')
     villageInfo.pack(side="top")
-    if villageChief == player.village.chef:
-        villageInfo.config(text='Chef : ' + villageChief.affiche_nom() + '\n(votre village)')
+    if village == player.village:
+        villageInfo.config(text=f"Chef : {village.chef}\n(votre village)")
+    
     if village.hasEglise:
         egliseInfo=tk.Label(panneau, text='Le village possède une église.', bg='gray')
         egliseInfo.pack(side="top")
-    peopleInfo=tk.Label(panneau, text='Habitants : '+str(len(village.habitants)) + "/" + str(village.max_habitants), bg='gray')
+    
+    peopleInfo=tk.Label(panneau, text=f"Habitants : {len(village.habitants)}/{village.max_habitants}", bg='gray')
     peopleInfo.pack(side="top")
+
     if village in player.fief:
-        armeeInfo=tk.Label(panneau, text='Votre armée : '+str(player.armee), bg='gray')
+        armeeInfo=tk.Label(panneau, text=f"Votre armée : {player.armee}", bg='gray')
     else:
-        armeeInfo=tk.Label(panneau, text='Armée du village : '+str(village.armee), bg='gray')
+        armeeInfo=tk.Label(panneau, text=f"Armée du village : {village.armee}", bg='gray')
     armeeInfo.pack(side="top")
-    if village in player.fief and villageChief != player.village.chef:
+
+    if village in player.fief and village != player.village:
         vassalInfo=tk.Label(panneau, text='Vassal de votre village.', bg='gray')
         vassalInfo.pack(side="top")
-        impotButton=tk.Button(panneau, text="Collecter les impôts\n(coût 1 ⓐ)", command=lambda: impositionSeigneur(villageChief, player))
+
+        impotButton = bouton_autodestruction("Collecter les impôts\n(coût 1 ⓐ)", lambda: impositionSeigneur(village.chef, player))
         impotButton.pack()
         if player.actions<1:
             impotButton.config(state='disabled')
+
     showImmigrationButton(i,j,player)
     showRecruitButton(i,j,player)
     showEndTurnButton()
 
     #guerre
     if village.chef.player != player:
-        bouton = [None]
-        def f(): 
-            if guerre(player, village.chef.player):
-                repeindre_villages(village.chef.player.fief)
-            bouton[0].destroy()
-        
-        bouton_guerre = tk.Button(panneau, text="Guerroyer", command=f)
-        bouton = [bouton_guerre]
+        bouton_guerre = bouton_autodestruction("Guerroyer", lambda: guerre(player, village.chef.player))
         bouton_guerre.pack()
         if False and player.armee == 0:
             bouton_guerre.config(state="disabled")
@@ -322,11 +319,6 @@ def impositionSeigneur(vassal, player):
     for child in panneau.winfo_children():
             if "Collecter les impôts\n(coût 1 ⓐ)" in child.cget("text"):
                 child.destroy()
-
-
-def showVillageButton(i,j,player):
-    if carte[i][j].master==player.village:
-        villageButton(i,j,player)
 
 def showEndTurnButton():
     for child in panneau.winfo_children():
@@ -464,17 +456,16 @@ canevas.bind("<B2-Motion>", lambda event: canevas.scan_dragto(event.x, event.y, 
 def start_on_enter(event, item):
     canevas.itemconfig(item.tkItem, outline='red', width = 2)
     canevas.tag_raise(item.tkItem,"all")
-    #canevas.tag_raise("village")
 
     canevas.bind('<Button-1>', lambda event, item=item : createPlayer(item.coords))
-
 
 def start_on_leave(event, item):
     canevas.itemconfig(item.tkItem, outline="")#outline='black', width = 1)
     canevas.tag_lower(item.tkItem)
     
     canevas.unbind('<Button-1>')
-    outlineontop()
+
+
 
 def createPlayer(cos):
     global startpos, player, players
@@ -486,22 +477,24 @@ def createPlayer(cos):
             canevas.unbind('<Button-1>')
             canevas.tag_bind(item.tkItem, '<Enter>', lambda event, item=item: on_enter(event, item))
             canevas.tag_bind(item.tkItem, '<Leave>', lambda event, item=item: on_leave(event, item))
-    player=projet.Player("lime",None, True)
-    x,y=startpos
-    village=actions.creer_village(carte[x][y],player, True)
-    player.village=village
-    capture(x,y,player, True)
-    drawVillage(x,y,player,True)
+    
+    # peut etre associer player a son village des le debut
+    player = Player("lime", None, True)
+    x,y=startpos 
+    player.village = Village(carte[x][y], player)#creer_village(carte[x][y],player, True)
+    capture(x, y, player, True)
+    
+    #drawVillage(x,y,player,True)
+    
     players.append(player)
     for i in range(9):
-        players.append(projet.Player(couls[i],None, False))
-        x,y = random.randint(0,111), random.randint(0,83)
+        x, y = random.randint(0,111), random.randint(0,83)
         if carte[x][y].master:
             continue
-        theirVillage=actions.creer_village(carte[x][y],players[i+1], True)
-        players[i+1].village=theirVillage
+
+        players.append(Player(couls[i], None, False))
+        players[i+1].village = Village(carte[x][y], players[i+1])
         capture(x,y,players[i+1], True)
-        drawVillage(x,y,players[i+1], True)
     newTurn()
 
 
@@ -568,7 +561,8 @@ def play(bot):
             villageloc = bot.botCreerVillage(carte)
             if villageloc:
                 x, y = villageloc.coords
-                drawVillage(x, y, bot)
+                Village(carte[x][y], bot)
+                #drawVillage(x, y, bot)
         elif action == 'collecte_impots' and bot.actions>=1:
             bot.botCollecteImpots()
             bot.actions -= 1

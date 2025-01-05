@@ -143,6 +143,8 @@ class Player():
     def vaincre(self, vaincu: Player):
         for village in vaincu.fief:
             village.chef.player = self
+            village.redraw()
+
         self.fief += vaincu.fief
         vaincu.fief = []
         vaincu.village.chef.vassalisation(self.village.chef)
@@ -240,17 +242,20 @@ class Ecclesiastique(Personne):
 
 
 class Noble(Personne):
-    def __init__(self, player: Player | None = None, *args, **kwargs):
+    def __init__(self, player: Player = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.argent = random.randint(10,50)
         self.ressources = random.randint(10,50)
 
         self.player = player
-        self.seigneur = None
         self.l_roturiers: list[Roturier] = []
         self.l_vassaux: list[Noble] = []
         self.soldats: list[Soldat] = []
+
+    @property
+    def seigneur(self):
+        return self.player.village.chef
 
     def affiche_nom(self):
         voy = "AEYUIOH"
@@ -267,14 +272,12 @@ class Noble(Personne):
             self.village.cure.ressources += montant
             self.ressources += -montant
 
-    def vassalisation(self, seigneur):
-        self.seigneur=seigneur
+    def vassalisation(self, seigneur: Noble):
+        self.player.fief.remove(self.village)
+        self.player = seigneur.player
+        #self.seigneur=seigneur
         seigneur.l_vassaux.append(self)
         seigneur.player.fief.append(self.village)
-
-        if self.player:
-            self.player.fief.remove(self.village)
-        self.player=seigneur.player
 
     def imposition_seigneur(self):
         impotArgent = int(0.3*self.argent)
@@ -397,8 +400,10 @@ class Village():
     def draw(self):
         tilecos = canevas.coords(self.case.tkItem)
         return canevas.create_polygon((tilecos[0]+taillecase/2),(tilecos[1]+taillecase/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*2/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*2/6),
-            fill=self.chef.player.couleur, tags=["village"], outline="")
+            fill=self.chef.player.couleur, tags=["village"], outline="black")
 
+    def redraw(self):
+        canevas.itemconfig(self.tkItem, fill=self.chef.player.couleur)
 
 
 
