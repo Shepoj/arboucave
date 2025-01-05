@@ -12,6 +12,7 @@ class Player():
         self.fief = [village] if village else []
         self.actions=10
         self.j1=j1
+        self.vaincu=False
 
         self.part = (randint(0, 10), randint(0, 10), randint(0, 10))
         self.ordre = [0, 1, 2]
@@ -21,6 +22,9 @@ class Player():
     def armee(self):
         return sum([village.armee for village in self.fief])
     
+    def __repr__(self):
+        return f"{self.__class__.__name__} {self.couleur}"
+
     def mort_soldats(self, pertes: int):
         non_vu = self.armee
         for village in self.fief:
@@ -30,6 +34,7 @@ class Player():
                     if random.random() < proba:
                         habitant.mourir()
                         pertes += -1
+                        print("SOLDAT MORT")
                     non_vu += -1
             
     def etendre_fief(self, village: Village):
@@ -125,7 +130,11 @@ class Player():
             target_village = choice(villages)
             village.chef.imposition_seigneur()
             return 1
-
+    def botGuerre(self, players):
+        adversaire = random.choice(players)
+        if adversaire != self:
+            return adversaire
+        return 0
     def botRecruterSoldat(self):
         villages = []
         for village in self.fief:
@@ -141,6 +150,7 @@ class Player():
 
 
     def vaincre(self, vaincu: Player):
+        print(f"{self} a vaincu {vaincu}")
         for village in vaincu.fief:
             village.chef.player = self
             village.redraw()
@@ -148,6 +158,8 @@ class Player():
         self.fief += vaincu.fief
         vaincu.fief = []
         vaincu.village.chef.vassalisation(self.village.chef)
+        vaincu.vaincu = True
+
 
 
 
@@ -348,23 +360,24 @@ class Village():
 
         self.habitants: list[Personne] = []
         self.chef = Noble(player, self)
-        self.ajout_habitant(self.chef)
-        for _ in range(4):
-            self.ajout_habitant(Roturier(self))
         
         self.cure = None
         self.armee = 0
 
         case.type = "village"
         case.capture(self)
+        
         player.etendre_fief(self)
+        self.ajout_habitant(self.chef)
+        for _ in range(4):
+            self.ajout_habitant(Roturier(self))
 
         # init
         self.tkItem = self.draw()
 
     @property
     def max_habitants(self):
-        return 20 * len(self.terres)
+        return (20 * len(self.terres) + 1) if self.hasEglise else (20 * len(self.terres))
     
     @property
     def hasEglise(self):
@@ -381,11 +394,9 @@ class Village():
         return False
     
     def construire_eglise(self):
-        if not self.hasEglise:
-            cure = Ecclesiastique(self)
-            self.max_habitants += 1
-            if self.ajout_habitant(self, cure):
-                self.cure = cure
+        cure = Ecclesiastique(self)
+        if self.ajout_habitant(cure):
+            self.cure = cure
  
     def ajoutTerres(self,terre):
         self.terres.append(terre)

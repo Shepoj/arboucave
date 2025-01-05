@@ -1,17 +1,19 @@
 import tkinter as tk
+import tkinter.messagebox as messagebox
+import subprocess
+
 import perlin
 import projet
 import actions
 import math
 import random
 
-from typing import Callable, Any
-
 from projet import Player, Case, Village
 from actions import guerre, creer_village
 from divers import argmax, bouton_autodestruction, l_bouton_autodestruction
 
 from config import *
+
 
 
 #shape = (0.3,0.3)
@@ -141,7 +143,13 @@ def drawVillage(i,j,player,init=False):
                 child.destroy()
     tile=carte[i][j].tkItem
     tilecos=canevas.coords(tile)
-    return canevas.create_polygon((tilecos[0]+taillecase/2),(tilecos[1]+taillecase/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*2/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*2/6), outline='black',fill=player.couleur,tags=["village"])
+    canevas.create_polygon((tilecos[0]+taillecase/2),(tilecos[1]+taillecase/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*2/6),(tilecos[0]+taillecase/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*5/6),(tilecos[0]+taillecase*5/6),(tilecos[1]+taillecase*2/6), outline='black',fill=player.couleur,tags=["village"])
+    if carte[i][j].master.hasEglise:
+        crossColor= 'black' if player.couleur != 'black' else 'white'
+        canevas.create_line(tilecos[0]+taillecase/2,tilecos[1]+2.5*taillecase/8,tilecos[0]+taillecase/2,tilecos[1]+taillecase*6/8, fill=crossColor, width=2)
+        canevas.create_line(tilecos[0]+taillecase/4,tilecos[1]+taillecase/2,tilecos[0]+taillecase*3/4,tilecos[1]+taillecase/2, fill=crossColor, width=2)
+
+
 
 def captureButton(i,j,player):
     bouton=tk.Button(panneau, text="Annexer cette case\n(coût 1 ⓐ)", command=lambda: capture(i,j,player))
@@ -209,13 +217,34 @@ def showVillageInfo(i: int, j: int, player: Player):
 
     showImmigrationButton(i,j,player)
     showRecruitButton(i,j,player)
+    showEgliseButton(i,j,player)
     showEndTurnButton()
 
     #guerre
     if village.chef.player != player:
-        bouton_guerre = bouton_autodestruction("Guerroyer", lambda: guerre(player, village.chef.player))
+        
+        bouton = [None]
+        def f(): 
+            player.actions += -3
+            if guerre(player, village.chef.player):
+                updateHeader(player)
+                winCheck()
+            else:
+                print("Vous avez perdu")
+                response = messagebox.askquestion("Game Over", "Vous avez perdu. Voulez-vous recommencer une partie ?")
+                if response == 'yes':
+                    win.destroy()
+                    subprocess.call(["python3", "./main.py"])
+                    return
+                else:
+                    win.destroy()
+                    return
+            bouton[0].destroy()
+        
+        bouton_guerre = bouton_autodestruction("Guerroyer", f)
         bouton_guerre.pack()
-        if False and player.armee == 0:
+
+        if player.actions < 3 or player.armee == 0:
             bouton_guerre.config(state="disabled")
 
 def showBuildButton(i,j,player):
@@ -249,6 +278,14 @@ def showImmigrationButton(i,j,player):
         immigrationButton.pack()
         if player.actions<1:
             immigrationButton.config(state='disabled')
+
+def showEgliseButton(i,j,player):
+    location=carte[i][j]
+    if location.master in player.fief and location.caseType=="village" and not location.master.hasEglise:
+        egliseButton=tk.Button(panneau, text="Construire une église\n(coût 1 ⓐ, 10 ⁂)", command=lambda: useEgliseButton(i,j,player))
+        egliseButton.pack()
+        if player.actions<1 or player.village.chef.ressources<10:
+            egliseButton.config(state='disabled')
 
 def useImmigrationButton(player, loc, immigrationType):
     village = loc.master
@@ -286,6 +323,25 @@ def useRecruitButton(player, loc):
             child.destroy()
     if player.j1:
         showVillageInfo(loc.coords[0], loc.coords[1], player)
+
+
+def useEgliseButton(i,j,player):
+    global taillecase
+    location=carte[i][j]
+    actions.construire_eglise(location.master)
+    player.actions-=1
+    updateHeader(player)
+    if player.j1:
+        for child in panneau.winfo_children():
+            if "Construire une église\n(coût 1 ⓐ, 10 ⁂)" in child.cget("text"):
+                child.destroy()
+    tile=carte[i][j].tkItem
+    tilecos=canevas.coords(tile)
+    crossColor= 'black' if player.couleur != 'black' else 'white'
+    canevas.create_line(tilecos[0]+taillecase/2,tilecos[1]+2.5*taillecase/8,tilecos[0]+taillecase/2,tilecos[1]+taillecase*6/8, fill=crossColor, width=2)
+    canevas.create_line(tilecos[0]+taillecase/4,tilecos[1]+taillecase/2,tilecos[0]+taillecase*3/4,tilecos[1]+taillecase/2, fill=crossColor, width=2)
+    if player.j1:
+        showVillageInfo(i,j,player)
 
 
 def drawBuilding(i,j,player):
@@ -412,7 +468,6 @@ def test(event):
 
 
 
-
 def draw_gear(canevas, x, y, radius, num_teeth, tooth_size, color):
     canevas.create_oval(x - radius, y - radius, x + radius, y + radius, outline="black", width=2, fill=color)
     angle_step = 360 / num_teeth
@@ -517,6 +572,17 @@ def newTurn():
         actions.collecte_impots(players[playing])
         players[playing].actions=10
         if players[playing].j1:
+            winCheck()
+            if player.vaincu:
+                print("Vous avez perdu")
+                response = messagebox.askquestion("Game Over", "Vous avez perdu. Voulez-vous recommencer une partie ?")
+                if response == 'yes':
+                    win.destroy()
+                    subprocess.call(["python3", "./main.py"])
+                    break
+                else:
+                    win.destroy()
+                    break
             updateHeader(players[playing])
             showEndTurnButton()
             return
@@ -538,7 +604,7 @@ def endTurns():
     newTurn()
 
 def play(bot):
-    all_actions = ['capture', 'collecte', 'build', 'construire_eglise', 'vassaliser', 'creer_village', 'collecte_impots', 'recruter_soldat']
+    all_actions = ['capture', 'collecte', 'build', 'construire_eglise', 'guerre', 'creer_village', 'collecte_impots', 'recruter_soldat']
     while bot.actions > 0:
         action = random.choice(all_actions)
         if action == 'capture' and bot.actions>=1:
@@ -555,8 +621,10 @@ def play(bot):
                 x, y = buildTile.coords
                 buildCase(x, y, bot)
         elif action == 'construire_eglise':
-            bot.botConstruireEglise() #a faire bien
-            bot.actions -= 1
+            evangelisation = bot.botConstruireEglise() 
+            if evangelisation:
+                useEgliseButton(evangelisation.coords[0], evangelisation.coords[1], bot)
+
         elif action == 'creer_village' and bot.actions>=1 and bot.village.chef.ressources>=10: 
             villageloc = bot.botCreerVillage(carte)
             if villageloc:
@@ -569,6 +637,17 @@ def play(bot):
         elif action == 'recruter_soldat' and bot.actions>=1 and bot.village.chef.argent>=10:
             bot.botRecruterSoldat()
             bot.actions -= 1
+        elif action == 'guerre' and bot.actions>=3 and bot.armee > 0:
+            adv = bot.botGuerre(players)
+            if adv:
+                village=adv.village
+                winner = guerre(bot, adv)
+                if winner:
+                    #repeindre_villages(village.chef.player.fief)
+                    bot.actions -= 3
+                else:
+                    pass
+                    #repeindre_villages(village.chef.player.fief)
         else:
             continue
     
@@ -576,6 +655,21 @@ def play(bot):
 
 
 
+def winCheck():
+    checker=True
+    for player in players:
+        if player.fief and not player.j1:
+            print('il reste des joueurs' + player.couleur)
+            checker=False
+    if checker:
+        response = messagebox.askquestion("Game Over", "Vous avez gagné ! Voulez-vous recommencer une partie ?")
+        if response == 'yes':
+            win.destroy()
+            subprocess.call(["python3", "./main.py"])
+            return
+        else:
+            win.destroy()
+            return
 
 
 
