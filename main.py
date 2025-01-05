@@ -52,6 +52,7 @@ for i in range(len(perlin_noise)):
         carte[i].append(tile)
 
 
+print(len(carte), len(carte[0]))
 
 def on_enter(event, item):
     canevas.itemconfig(item.tkItem, outline='red', width = 2)
@@ -79,6 +80,7 @@ def on_click(event):
     showVillageButton(x,y,player)
     showCaptureButton(x,y,player)
     showVillageInfo(x,y,player)
+    showRecruitButton(x,y,player)
     showCollectButton(x,y,player)
     showBuildButton(x,y,player)
     showEndTurnButton()
@@ -150,7 +152,7 @@ def villageButton(i,j,player):
     isVillage=False
     for x in range(minx,maxx):
         for y in range(miny,maxy):
-            if carte[x][y].type=="village":
+            if carte[x][y].caseType=="village":
                 isVillage=True
     if not isVillage and carte[i][j].master in player.fief:
         bouton=tk.Button(panneau, text="Construire un village\n(coût 1 ⓐ, 10 ⁂)", command=lambda: drawVillage(i,j,player))
@@ -185,7 +187,7 @@ def showVillageInfo(i,j,player: Player):
         if player.actions<1:
             impotButton.config(state='disabled')
  
-        #debug
+    if village in player.fief:
         habitants_info = tk.Label(panneau, text=village.info_habitants(), bg="gray")
         habitants_info.pack(side="top")
 
@@ -205,11 +207,19 @@ def showVillageInfo(i,j,player: Player):
 
 def showBuildButton(i,j,player):
     location=carte[i][j]
-    if location.master in player.fief and location.type!="village" and not location.built:
+    if location.master in player.fief and location.caseType!="village" and not location.built:
         buildButton=tk.Button(panneau, text="Construire sur cette case\n(coût 25 ⁂, 25 ¤, 1 ⓐ)", command=lambda: buildCase(i,j,player))
         buildButton.pack()
         if player.actions<1 or player.village.chef.ressources<25 or player.village.chef.argent<25:
             buildButton.config(state='disabled')
+
+def showRecruitButton(i,j,player):
+    location=carte[i][j]
+    if location.master in player.fief and location.caseType=="village":
+        recruitButton=tk.Button(panneau, text="Recruter un soldat\n(coût 1 ⓐ, 10 ¤)", command=lambda: useRecruitButton(player, location))
+        recruitButton.pack()
+        if player.actions<1 or player.village.chef.argent<10:
+            recruitButton.config(state='disabled')
 
 def buildCase(i,j,player):
     location=carte[i][j]
@@ -221,6 +231,17 @@ def buildCase(i,j,player):
             if "Construire sur cette case\n(coût 25 ⁂, 25 ¤, 1 ⓐ)" in child.cget("text"):
                 child.destroy()
 
+def useRecruitButton(player, loc):
+    village = loc.master
+    actions.recruterSoldat(player, village)
+    updateHeader(player)
+    for child in panneau.winfo_children():
+        if "Recruter un soldat\n(coût 1 ⓐ, 10 ¤)" in child.cget("text"):
+            child.destroy()
+    if player.j1:
+        showRecruitButton(loc.coords[0], loc.coords[1], player)
+
+
 def drawBuilding(i,j,player):
     global taillecase
     tile=carte[i][j].tkItem
@@ -229,7 +250,7 @@ def drawBuilding(i,j,player):
 
 def showCollectButton(i,j,player):
     location=carte[i][j]
-    if location.master in player.fief and location.type!="village":
+    if location.master in player.fief and location.caseType!="village":
         collectButton=tk.Button(panneau, text="Collecter les ressources\n(coût 2 ⓐ)", command=lambda: collectRessources(i,j,player))
         collectButton.pack()
         if player.actions<2:
@@ -447,9 +468,12 @@ def newTurn():
     actions.doEvent(fun)
     random.shuffle(players)
     while playing<len(players):
+        actions.villagerEachTurn(players[playing])
         actions.collecte_impots(players[playing])
         players[playing].actions=10
         if players[playing].j1:
+            updateHeader(players[playing])
+            showEndTurnButton()
             return
         play(players[playing])
         updateCapturedOutline(players[playing].couleur)
@@ -461,6 +485,7 @@ def endTurns():
         child.destroy()
     playing+=1
     while playing<len(players):
+        actions.villagerEachTurn(players[playing])
         actions.collecte_impots(players[playing])
         play(players[playing])
         updateCapturedOutline(players[playing].couleur)
@@ -468,7 +493,7 @@ def endTurns():
     newTurn()
 
 def play(bot):
-    all_actions = ['capture', 'collecte', 'build', 'construire_eglise', 'vassaliser', 'creer_village', 'collecte_impots']
+    all_actions = ['capture', 'collecte', 'build', 'construire_eglise', 'vassaliser', 'creer_village', 'collecte_impots', 'recruter_soldat']
     while bot.actions > 0:
         action = random.choice(all_actions)
         if action == 'capture' and bot.actions>=1:
@@ -494,6 +519,9 @@ def play(bot):
                 drawVillage(x, y, bot)
         elif action == 'collecte_impots' and bot.actions>=1:
             bot.botCollecteImpots()
+            bot.actions -= 1
+        elif action == 'recruter_soldat' and bot.actions>=1 and bot.village.chef.argent>=10:
+            bot.botRecruterSoldat()
             bot.actions -= 1
         else:
             continue

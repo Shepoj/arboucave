@@ -12,12 +12,18 @@ def creer_personne(statut: str, player = None):
     elif statut == "noble":
         return Noble(player)
 
+def recruterSoldat(player: Player, village: Village):
+    if village.max_habitants > len(village.habitants):
+        player.actions += -1
+        village.chef.argent += -10
+        village.ajout_habitant(Soldat())
+
 
 def immigration(village: Village, paysan = True):
     for _ in range(3):
         resultat = village.ajout_habitant(Roturier(paysan))
         if not resultat:
-            print("Un habitant n'a pas pu être ajouté")
+            print("Un habitant n'a pas pu être ajouté") #FENETRE
  
 
 def construire_eglise(village: Village):
@@ -43,6 +49,15 @@ def collecte_impots(player: Player):
     for village in player.fief:
         village.chef.distribution_dime()
 
+def villagerEachTurn(player: Player):
+    for village in player.fief:
+        for villageois in village.habitants:
+            if type(villageois) == Roturier:
+                villageois.produire()
+                if villageois.vieillir():
+                    continue
+            villageois.consommer()
+            
 
 def strategie(armee: int, part: tuple[int, int, int]):
     total = part[0] + part[1] + part[2]

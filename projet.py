@@ -43,11 +43,11 @@ class Player():
                 neighbors = []
                 if x > 0:
                     neighbors.append((x-1, y))
-                if x < 82:
+                if x < 110:
                     neighbors.append((x+1, y))
                 if y > 0:
                     neighbors.append((x, y-1))
-                if y < 110:
+                if y < 82:
                     neighbors.append((x, y+1))
                 neighbors=set(neighbors)
                 for nx, ny in neighbors:
@@ -57,6 +57,7 @@ class Player():
         if border_tiles:
             target_tile = choice(border_tiles)
             return target_tile
+        return 0
         
 
     def botCollecte(self):
@@ -75,7 +76,7 @@ class Player():
         unbuilt = []
         for village in self.fief:
             for terre in village.terres:
-                if not terre.built and terre.type != "village":
+                if not terre.built and terre.caseType != "village":
                     unbuilt.append(terre)
         if unbuilt:
             target_tile = choice(unbuilt)
@@ -97,7 +98,7 @@ class Player():
         villageable = []
         for village in self.fief:
             for terre in village.terres:
-                if terre.type != "village":
+                if terre.caseType != "village":
                     i,j=terre.coords
                     gx,gy=len(carte),len(carte[0])
                     minx,miny=max(0,i-2),max(0,j-2)
@@ -105,7 +106,7 @@ class Player():
                     isVillage=False
                     for x in range(minx,maxx):
                         for y in range(miny,maxy):
-                            if carte[x][y].type=="village":
+                            if carte[x][y].caseType=="village":
                                 isVillage=True
                     if not isVillage:
                         villageable.append(terre)
@@ -124,17 +125,32 @@ class Player():
             village.chef.imposition_seigneur()
             return 1
 
+    def botRecruterSoldat(self):
+        villages = []
+        for village in self.fief:
+            if len(village.habitants) < village.max_habitants:
+                villages.append(village)
+        if villages:
+            target_village = choice(villages)
+            if target_village.chef.argent > 10:
+                target_village.chef.argent += -10
+                target_village.ajout_habitant(Soldat())
+                return 1
+        return 0
+
+
     def vaincre(self, vaincu: Player):
         for village in vaincu.fief:
             village.chef.player = self
         self.fief += vaincu.fief
         vaincu.fief = []
+        vaincu.village.chef.vassalisation(self.village.chef)
 
 
 
 class Personne():
     def __init__(self,
-        village: Village,
+        village: Village | None = None,
         prenom: str | None = None,
         nom: str | None = None,
         age: int | None = None,
@@ -163,9 +179,17 @@ class Personne():
         self.age += 1
         if self.age > self.ev:
             self.mourir()
-
+            return True
+        return False
+    def consommer(self):
+        if self.ressources > 0:
+            self.ressources += -1
+        elif type(self)==Soldat and self.village.chef.ressources > 0:
+            self.village.chef.ressources += -1
+        else:
+            self.mourir()
     def mourir(self):
-        self.village
+        self.village.habitants.remove(self)
 
 
 class Roturier(Personne):
@@ -182,6 +206,9 @@ class Roturier(Personne):
             self.ressources = 0
             self.prod=random.randint(5,10)
 
+    def produire(self):
+        self.ressources += self.prod
+        self.argent += self.prod
     def payer_impot(self, noble: Noble):
         cout = 0.5 if self.statut=="paysan" else 0.25
         if self.argent > 0:
@@ -235,10 +262,10 @@ class Noble(Personne):
             roturier.payer_impot(self)
 
     def distribution_dime(self):
-        montant = 15
+        montant = 1
         if self.village is not None and self.village.hasEglise:
-            self.village.cure.argent += montant
-            self.argent += -montant
+            self.village.cure.ressources += montant
+            self.ressources += -montant
 
     def vassalisation(self, seigneur):
         self.seigneur=seigneur
@@ -252,10 +279,12 @@ class Noble(Personne):
     def imposition_seigneur(self):
         impotArgent = int(0.3*self.argent)
         impotRessources = int(0.3*self.ressources)
-        self.argent -= impotArgent
-        self.ressources -= impotRessources
-        self.seigneur.argent += impotArgent
-        self.seigneur.ressources += impotRessources
+        aImposerArgent = impotArgent if max(self.argent-impotArgent, 0) else self.argent
+        aImposerRessources = impotRessources if max(self.ressources-impotRessources, 0) else self.ressources
+        self.argent -= aImposerArgent
+        self.ressources -= aImposerRessources
+        self.seigneur.argent += aImposerArgent
+        self.seigneur.ressources += aImposerRessources
 
 
 
@@ -268,7 +297,7 @@ class Case():
         self.captured=False
         self.master=None
         self.tkItem=tkItem
-        self.type=None
+        self.caseType=None
         self.built=False
         
     def capture(self,village):
@@ -294,7 +323,7 @@ class Case():
         
 class Village(Case):
     def __init__(self, case: Case, player: Player):
-        self.type="village"
+        self.caseType="village"
 
         self.lieu = case
         self.coords = case.coords
@@ -309,7 +338,7 @@ class Village(Case):
         self.cure = None
         self.armee = 0
 
-        case.type = "village"
+        case.caseType = "village"
         case.master = self
         player.etendre_fief(self)
 
@@ -334,6 +363,7 @@ class Village(Case):
     def construire_eglise(self):
         if not self.hasEglise:
             cure = Ecclesiastique(self)
+            self.max_habitants += 1
             if self.ajout_habitant(self, cure):
                 self.cure = cure
  
