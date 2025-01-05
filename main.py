@@ -351,7 +351,6 @@ def test(event):
 def draw_gear(canevas, x, y, radius, num_teeth, tooth_size, color):
     canevas.create_oval(x - radius, y - radius, x + radius, y + radius, outline="black", width=2, fill=color)
     angle_step = 360 / num_teeth
-    print('aaaa')
     for i in range(num_teeth):
         angle = math.radians(i * angle_step)
         next_angle = math.radians((i + 1) * angle_step)
