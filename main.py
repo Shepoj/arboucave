@@ -80,7 +80,6 @@ def on_click(event):
     showVillageButton(x,y,player)
     showCaptureButton(x,y,player)
     showVillageInfo(x,y,player)
-    showRecruitButton(x,y,player)
     showCollectButton(x,y,player)
     showBuildButton(x,y,player)
     showEndTurnButton()
@@ -171,6 +170,8 @@ def showVillageInfo(i,j,player: Player):
     village=carte[i][j].master
     if village==None:
         return
+    for child in panneau.winfo_children():
+        child.destroy()
     villageChief=carte[i][j].master.chef
     villageInfo=tk.Label(panneau, text='Chef : ' + villageChief.affiche_nom(), bg='gray')
     villageInfo.pack(side="top")
@@ -179,6 +180,13 @@ def showVillageInfo(i,j,player: Player):
     if village.hasEglise:
         egliseInfo=tk.Label(panneau, text='Le village possède une église.', bg='gray')
         egliseInfo.pack(side="top")
+    peopleInfo=tk.Label(panneau, text='Habitants : '+str(len(village.habitants)) + "/" + str(village.max_habitants), bg='gray')
+    peopleInfo.pack(side="top")
+    if village in player.fief:
+        armeeInfo=tk.Label(panneau, text='Votre armée : '+str(player.armee), bg='gray')
+    else:
+        armeeInfo=tk.Label(panneau, text='Armée du village : '+str(village.armee), bg='gray')
+    armeeInfo.pack(side="top")
     if village in player.fief and villageChief != player.village.chef:
         vassalInfo=tk.Label(panneau, text='Vassal de votre village.', bg='gray')
         vassalInfo.pack(side="top")
@@ -186,10 +194,9 @@ def showVillageInfo(i,j,player: Player):
         impotButton.pack()
         if player.actions<1:
             impotButton.config(state='disabled')
- 
-    if village in player.fief:
-        habitants_info = tk.Label(panneau, text=village.info_habitants(), bg="gray")
-        habitants_info.pack(side="top")
+    showImmigrationButton(i,j,player)
+    showRecruitButton(i,j,player)
+    showEndTurnButton()
 
     #guerre
     if village.chef.player != player:
@@ -221,6 +228,39 @@ def showRecruitButton(i,j,player):
         if player.actions<1 or player.village.chef.argent<10:
             recruitButton.config(state='disabled')
 
+def showImmigrationButton(i,j,player):
+    location=carte[i][j]
+    if location.master in player.fief and location.caseType=="village":
+        def setImmigrationType(var, type):
+            var.set(type)
+
+        immigrationType = tk.StringVar(value="Paysans")
+        paysansButton = tk.Radiobutton(panneau, text="Paysans (1 ⓐ)", variable=immigrationType, value="Paysans", bg='gray', command=lambda: setImmigrationType(immigrationType, "Paysans"))
+        artisansButton = tk.Radiobutton(panneau, text="Artisans (2 ⓐ)", variable=immigrationType, value="Artisans", bg='gray', command=lambda: setImmigrationType(immigrationType, "Artisans"))
+        paysansButton.pack()
+        artisansButton.pack()
+        immigrationButton=tk.Button(panneau, text="Immigrer", command=lambda: useImmigrationButton(player, location, immigrationType))
+        immigrationButton.pack()
+        if player.actions<1:
+            immigrationButton.config(state='disabled')
+
+def useImmigrationButton(player, loc, immigrationType):
+    village = loc.master
+    actions.immigration(player, village, immigrationType.get() == "Paysans")
+    updateHeader(player)
+    if player.j1:
+        for child in panneau.winfo_children():
+            if "Immigrer" in child.cget("text"):
+                child.destroy()
+            elif "Paysans" in child.cget("text"):
+                child.destroy()
+            elif "Artisans" in child.cget("text"):
+                child.destroy()
+            elif "Recruter un soldat\n(coût 1 ⓐ, 10 ¤)" in child.cget("text"):
+                child.destroy()
+        showVillageInfo(loc.coords[0], loc.coords[1], player)
+
+
 def buildCase(i,j,player):
     location=carte[i][j]
     location.build()
@@ -239,7 +279,7 @@ def useRecruitButton(player, loc):
         if "Recruter un soldat\n(coût 1 ⓐ, 10 ¤)" in child.cget("text"):
             child.destroy()
     if player.j1:
-        showRecruitButton(loc.coords[0], loc.coords[1], player)
+        showVillageInfo(loc.coords[0], loc.coords[1], player)
 
 
 def drawBuilding(i,j,player):
@@ -280,6 +320,9 @@ def showVillageButton(i,j,player):
         villageButton(i,j,player)
 
 def showEndTurnButton():
+    for child in panneau.winfo_children():
+        if "Fin de tour" in child.cget("text"):
+            child.destroy()
     endTurnButton=tk.Button(panneau, text="Fin de tour", command=endTurns)
     endTurnButton.pack(side='bottom')
 

@@ -167,7 +167,7 @@ class Personne():
         self.village = village
 
     def __repr__(self):
-        return f"{self.__class__.__name__} {self.argent}ⓐ {self.ressources}⁂"
+        return f"{self.__class__.__name__} {self.argent}¤ {self.ressources}⁂"
     
     def __str__(self):
         return self.affiche_nom()
@@ -193,10 +193,9 @@ class Personne():
 
 
 class Roturier(Personne):
-    def __init__(self, *args, paysan = True, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, paysan = True, **kwargs):
+        super().__init__(**kwargs)
         self.statut = "paysan" if paysan else "artisan"
-
         if self.statut == "paysan":
             self.argent = 0
             self.ressources = 0
@@ -227,8 +226,8 @@ class Roturier(Personne):
 
 
 class Soldat(Personne):
-    pass
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 class Ecclesiastique(Personne):
     def __init__(self, *args, **kwargs):
@@ -369,6 +368,7 @@ class Village(Case):
  
     def ajoutTerres(self,terre):
         self.terres.append(terre)
+        self.terres = list(set(self.terres))
 
     def info_habitants(self) -> str:
         info = ""

@@ -19,11 +19,13 @@ def recruterSoldat(player: Player, village: Village):
         village.ajout_habitant(Soldat())
 
 
-def immigration(village: Village, paysan = True):
+def immigration(player, village: Village, paysan = True):
+    player.actions += -1 if paysan else -2
     for _ in range(3):
-        resultat = village.ajout_habitant(Roturier(paysan))
-        if not resultat:
-            print("Un habitant n'a pas pu être ajouté") #FENETRE
+        if village.max_habitants > len(village.habitants):
+                village.ajout_habitant(Roturier(paysan))
+                """if not resultat:
+            print("Un habitant n'a pas pu être ajouté") #FENETRE"""
  
 
 def construire_eglise(village: Village):
