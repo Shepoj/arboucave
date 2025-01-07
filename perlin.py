@@ -44,17 +44,16 @@ def perlin_noise(x, y, gradients, grid_size):
     
     return lerp(x0, x1, v)
 
-def generate_perlin_grid(width, height, grid_size, ampli):
+def generate_perlin_grid(width, height, grid_size, ampli) -> list[list[float]]:
     gradients = generate_gradients(grid_size)
     
     grid = []
-    for y in range(height):
+    for x in range(width):
         row = []
-        for x in range(width):
+        for y in range(height):
             value = perlin_noise(x * 0.1, y * 0.1, gradients, grid_size)  
             amplified = value * ampli
             row.append(amplified)
         grid.append(row)
     
     return grid
-

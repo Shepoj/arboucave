@@ -1,17 +1,12 @@
 from typing import Callable
 
-from projet import Player, Roturier, Soldat, Ecclesiastique, Noble, Case, Village
+from projet import Player
+from gens import Roturier, Soldat, Ecclesiastique, Noble
+from carte import Case, Village
 
 
-def creer_personne(statut: str, player = None):
-    if statut == "roturier":
-        return Roturier()
-    elif statut == "soldat":
-        return Soldat()
-    elif statut == "ecclesiastique":
-        return Ecclesiastique()
-    elif statut == "noble":
-        return Noble(player)
+
+
 
 def recruterSoldat(player: Player, village: Village):
     if village.max_habitants > len(village.habitants):
@@ -24,12 +19,13 @@ def immigration(player, village: Village, paysan = True):
     player.actions += -1 if paysan else -2
     for _ in range(3):
         if village.max_habitants > len(village.habitants):
-                village.ajout_habitant(Roturier(paysan))
+                village.ajout_habitant(Roturier(village))
                 """if not resultat:
             print("Un habitant n'a pas pu être ajouté") #FENETRE"""
  
 
-def construire_eglise(village: Village):
+def construire_eglise(village: Village, player: Player):
+    player.actions += -1
     village.construire_eglise()
 
 
