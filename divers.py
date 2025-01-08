@@ -1,6 +1,6 @@
 from typing import Any, Callable
-from tkinter import Button
-from config import win, panneau
+from tkinter import Button, Misc
+from config import w, panneau
 
 type point[T] = tuple[T, T]
 type rgb = tuple[int, int, int]
@@ -18,15 +18,16 @@ def argmax[T](d: dict[int, T]):
 
 
 def str_to_rgb(couleur: str) -> rgb:
-    return tuple(c//256 for c in win.winfo_rgb(couleur))
+    r, g, b = w.winfo_rgb(couleur)
+    return (r//256, g//256, b//256)
 
 def mix_couleurs(a: str, b: str):
-    a = str_to_rgb(a)
-    b = str_to_rgb(b)
+    a_rgb = str_to_rgb(a)
+    b_rgb = str_to_rgb(b)
 
     final = "#"
-    for ca, cb in zip(a, b):
-        aadd = str(hex((ca + cb)//2))[-2:]
+    for a_c, b_c in zip(a_rgb, b_rgb):
+        aadd = str(hex((a_c + b_c)//2))[-2:]
         if aadd.startswith("x"):
             aadd = "0" + aadd[1:]
         final += aadd
@@ -67,33 +68,11 @@ def adjacent(p: point[int], m: point[int], M: point[int]):
 
 
 
-def bouton_autodestruction(texte: str, f: Callable[[], Any]):
-    # appuyer un bouton le détruit
-    magie = [None]
+def bouton_autodestruction(parent: Misc, texte: str, command: Callable[[], Any]):
+    def f(self: Button):
+        self.destroy()
+        command()
     
-    def command():
-        f()
-        magie[0].destroy()
-    bouton = Button(panneau, text=texte, command=command)
-    magie = [bouton]
-
-    # petite surprise si on utilise une référence au bouton après sa destruction
+    bouton = Button(parent, text=texte)
+    bouton.config(command=lambda self=bouton: f(self))
     return bouton
-
-
-
-def l_bouton_autodestruction(l_texte: str, l_f: list[Callable[[], Any]]):
-    # activer un bouton les détruits tous
-    magie: list[Button] = []
-
-    for i in range(len(l_f)):
-        f = l_f[i]
-        def command():
-            f()
-            for bouton in magie:
-                bouton.destroy()
-        
-        bouton = Button(panneau, text=l_texte[i], command=command)
-        magie.append(bouton)
-    
-    return magie
