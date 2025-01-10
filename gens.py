@@ -60,8 +60,12 @@ class Roturier(Personne):
     def produire(self):
         self.ressources += self.prod
         self.argent += self.prod
-    
-    def payer_impot(self, montant: int):
+
+    # changer ça TODO e
+    def payer_impot(self):
+        pass
+
+    def _payer_impot(self, montant: float):
         noble = self.village.chef
 
         if self.argent > 0:
@@ -83,7 +87,7 @@ class Paysan(Roturier):
         self.prod = randint(2, 5)
 
     def payer_impot(self):
-        super().payer_impot(0.5)
+        super()._payer_impot(0.5)
 
 class Artisant(Roturier):
     def __init__(self, village):
@@ -93,7 +97,7 @@ class Artisant(Roturier):
         self.prod = randint(5, 10)
     
     def payer_impot(self):
-        super().payer_impot(0.25)
+        super()._payer_impot(0.5)
 
 
 
@@ -127,7 +131,7 @@ class Ecclesiastique(Personne):
 
 
 class Noble(Personne):
-    def __init__(self, village: Village, player: Player):
+    def __init__(self, village: Village):
         super().__init__(village)
 
         self.argent = randint(10,50)
@@ -136,8 +140,6 @@ class Noble(Personne):
         self.l_roturiers: list[Roturier] = []
         self.l_vassaux: list[Noble] = []
         self.soldats: list[Soldat] = []
-        
-        self.player = player
  
     def __str__(self):
         voy = "AEYUIOH"
@@ -146,18 +148,19 @@ class Noble(Personne):
 
     @property
     def seigneur(self):
-        return self.player.village.chef
+        return self.village.chef
 
     def collecte_impots(self):
         for roturier in self.l_roturiers:
-            roturier.payer_impot(self)
+            roturier.payer_impot()
 
     def distribution_dime(self):
         montant = 1
-        if self.village.a_eglise:
+        if self.village.cure is not None:
             self.village.cure.ressources += montant
             self.ressources += -montant
 
+    # TODO
     def vassalisation(self, seigneur: Noble):
         self.player.fief.remove(self.village)
         self.player = seigneur.player

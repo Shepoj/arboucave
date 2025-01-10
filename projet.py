@@ -1,22 +1,24 @@
 from __future__ import annotations
 
-import random
-from random import randint, shuffle, choice
 from carte import Case, Village
 from gens import Soldat
+
+from random import random, randint, shuffle, choice
+
 
 
 
 
 
 class Player():
-    def __init__(self, couleur: str, village: Village | None = None, j1=False):
+    def __init__(self, couleur: str, village: Village, j1=False):
         self.couleur = couleur
         self.village = village
-        self.fief = [village] if village else []
-        self.actions=10
-        self.j1=j1
-        self.vaincu=False
+        self.fief = [village]
+
+        self.actions = 10
+        self.j1 = j1
+        self.vaincu = False
 
         self.part = (randint(0, 10), randint(0, 10), randint(0, 10))
         self.ordre = [0, 1, 2]
@@ -35,7 +37,7 @@ class Player():
             for habitant in village.habitants:
                 if isinstance(habitant, Soldat):
                     proba = pertes/non_vu
-                    if random.random() < proba:
+                    if random() < proba:
                         habitant.mourir()
                         pertes += -1
                         print("SOLDAT MORT")
@@ -86,7 +88,7 @@ class Player():
         unbuilt = []
         for village in self.fief:
             for terre in village.terres:
-                if not terre.built and terre.caseType != "village":
+                if not terre.construite and not isinstance(terre, Village):
                     unbuilt.append(terre)
         if unbuilt:
             target_tile = choice(unbuilt)
@@ -108,7 +110,7 @@ class Player():
         villageable = []
         for village in self.fief:
             for terre in village.terres:
-                if terre.caseType != "village":
+                if not isinstance(terre, Village):
                     i,j=terre.coords
                     w, h = len(carte),len(carte[0])
                     minx,miny=max(0,i-2),max(0,j-2)
@@ -132,10 +134,10 @@ class Player():
                 villages.append(village)
         if villages:
             target_village = choice(villages)
-            village.chef.imposition_seigneur()
+            target_village.chef.imposition_seigneur()
             return 1
     def botGuerre(self, players):
-        adversaire = random.choice(players)
+        adversaire = choice(players)
         if adversaire != self:
             return adversaire
         return 0
@@ -148,16 +150,16 @@ class Player():
             target_village = choice(villages)
             if target_village.chef.argent > 10:
                 target_village.chef.argent += -10
-                target_village.ajout_habitant(Soldat())
+                target_village.ajout_habitant(Soldat(target_village))
                 return 1
         return 0
 
 
     def vaincre(self, vaincu: Player):
         print(f"{self} a vaincu {vaincu}")
-        for village in vaincu.fief:
-            village.chef.player = self
-            village.redraw()
+        #for village in vaincu.fief:
+            #village.player = self
+            #village.redraw()
 
         self.fief += vaincu.fief
         vaincu.fief = []
@@ -167,20 +169,8 @@ class Player():
 
 
 
-#    def redraw(self, bord: tuple[bool, bool, bool, bool]):
-#        # ordre W E N S
-#        for ligne in self.outline:
-#            if ligne is not None:
-#                canevas.delete(ligne)
-#        
-#        [x1, y1, x2, y2] = canevas.coords(self.fill)
-#        X = (x1, x2)
-#        Y = (y1, y2)
-#        for i in range(4):
-#            if bord[i]:
-#                self.outline[i] = None
 
 if __name__ == "__main__":
-    p = Player("lime")
     c = Case((0, 0), "eau")
-    v = Village(c, p)
+    v = Village(c, "lime")
+    p = Player("lime", v)

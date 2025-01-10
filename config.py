@@ -1,30 +1,22 @@
 from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from carte import Case
 
 import tkinter as tk
 
 
 
-win = tk.Tk()
+carte_w, carte_h = 112, 84
 
-donnees=tk.Frame(win, width=1182, height=40, bg='gray')
-donnees.pack_propagate(False)
+if TYPE_CHECKING:
+    from projet import Player
 
-canevas = tk.Canvas(win, width=982, height=737, bg='white')
-
-panneau=tk.Frame(win, width=200, height=737, bg='gray')
-panneau.pack_propagate(False)
-
-
-
-donnees.grid(column=0,row=0,columnspan=2)
-canevas.grid(column=0,row=1)
-panneau.grid(column=1,row=1)
+    player: Player
+    players: list[Player]
+else:
+    player = None
+    Players = []
 
 
 
-grille_w, grille_h = 112, 84
 taille_case = 35
 
 seuils = {
@@ -36,5 +28,23 @@ seuils = {
 couleur_terrain = {
     "roche": "gray",
     "herbe": "green",
-    "eau": "blue"
+    "eau": "dark slate blue"
 }
+
+directions = ("w", "s", "e", "n")
+
+
+
+w = tk.Tk()
+
+donnees=tk.Frame(w, width=1182, height=40, bg='gray')
+donnees.pack_propagate(False)
+
+canevas = tk.Canvas(w, width=982, height=737, bg='white')
+
+panneau=tk.Frame(w, width=200, height=737, bg='gray')
+panneau.pack_propagate(False)
+
+donnees.grid(column=0, row=0, columnspan=2)
+canevas.grid(column=0, row=1)
+panneau.grid(column=1, row=1)

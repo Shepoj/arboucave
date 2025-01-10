@@ -1,8 +1,7 @@
-from typing import Callable
-
 from projet import Player
 from gens import Roturier, Soldat, Ecclesiastique, Noble
-from carte import Case, Village
+from carte import Village
+from gfx import Case_gfx, Village_gfx, carte
 
 
 
@@ -12,7 +11,7 @@ def recruterSoldat(player: Player, village: Village):
     if village.max_habitants > len(village.habitants):
         player.actions += -1
         village.chef.argent += -10
-        village.ajout_habitant(Soldat())
+        village.ajout_habitant(Soldat(village))
 
 
 def immigration(player, village: Village, paysan = True):
@@ -33,12 +32,16 @@ def vassaliser(seigneur,vassal):
     pass
 
 
-def creer_village(case: Case, player: Player, init = False):
-    if not init:
-        player.actions += -1
-        player.village.chef.ressources += -10
+def creer_village(case: Case_gfx, player: Player):
+    player.actions += -1
+    player.village.chef.ressources += -10
 
-    return Village(case, player)
+    v = Village_gfx(case, player.couleur)
+    x, y = v.coords
+    carte[x][y] = v
+    player.fief.append(v)
+    # TODO
+    return v
 
 
 def collecte_impots(player: Player):
