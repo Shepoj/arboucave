@@ -1,35 +1,75 @@
 from projet import Player
 from gens import Roturier, Soldat, Ecclesiastique, Noble
 from carte import Case, Village
-from gfx import Case_gfx, Village_gfx, carte
+from gfx import Case_gfx, Ferme_gfx, Village_gfx, carte
 
 
 
 
 
+# TODO prochaine etape
+
+# case
 def capture(case: Case, player: Player):
     player.actions += -1
     case.capture(player.village)
 
 def collecte_ressources(case: Case, player: Player):
-    case.collecte()
     player.actions += -2
+    case.collecte()
+
+def construire_ferme(case: Case_gfx, player: Player):
+    assert case.controle
     
+    player.actions += -1
+    case.controle.chef.argent += -10
+    case.controle.chef.ressources += -25
+
+    f = Ferme_gfx(case, player.couleur)
+    x, y = f.coords
+    carte[x][y] = f
+    case.controle.terres.remove(case)
+    case.controle.terres.append(f)
+    f.draw()
+    f.redraw()
+    return f
+
+def construire_village(case: Case_gfx, player: Player):
+    player.actions += -1
+    player.village.chef.ressources += -10
+
+    v = Village_gfx(case, player.couleur)
+    x, y = v.coords
+    carte[x][y] = v
+    player.fief.append(v)
+    v.draw()
+    return v
+    
+
+# village
 def construire_eglise(village: Village, player: Player):
     player.actions += -1
     village.construire_eglise()
 
+def imposition_seigneur(village: Village, player: Player):
+    player.actions += -1
+    village.chef.imposition_seigneur()
+
+def recruter_soldat(village: Village, player: Player):
+    player.actions += -1
+    village.chef.argent += -10
+    village.ajout_habitant(Soldat(village))
 
 
 
 
-
-
-def recruterSoldat(player: Player, village: Village):
-    if village.max_habitants > len(village.habitants):
-        player.actions += -1
-        village.chef.argent += -10
-        village.ajout_habitant(Soldat(village))
+# chaque tour
+def collecte_impots(player: Player):
+    for village in player.fief:
+        village.chef.collecte_impots()
+    
+    for village in player.fief:
+        village.chef.distribution_dime()
 
 
 def immigration(player, village: Village, paysan = True):
@@ -44,25 +84,6 @@ def immigration(player, village: Village, paysan = True):
 
 def vassaliser(seigneur,vassal):
     pass
-
-
-def creer_village(case: Case_gfx, player: Player):
-    player.actions += -1
-    player.village.chef.ressources += -10
-
-    v = Village_gfx(case, player.couleur)
-    x, y = v.coords
-    carte[x][y] = v
-    player.fief.append(v)
-    return v
-
-
-def collecte_impots(player: Player):
-    for village in player.fief:
-        village.chef.collecte_impots()
-    
-    for village in player.fief:
-        village.chef.distribution_dime()
 
 def villagerEachTurn(player: Player):
     for village in player.fief:

@@ -1,13 +1,13 @@
-import random
-import math
+from math import cos, sin, pi
+from random import uniform
 
 
 def generate_gradients(grid_size):
     gradients = {}
     for y in range(grid_size):
         for x in range(grid_size):
-            angle = random.uniform(0, 2 * math.pi)
-            gradients[(x, y)] = (math.cos(angle), math.sin(angle))
+            angle = uniform(0, 2*pi)
+            gradients[(x, y)] = (cos(angle), sin(angle))
     return gradients
 
 

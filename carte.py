@@ -7,6 +7,8 @@ from divers import point, Once
 
 
 
+
+
 class Case(metaclass=Once):
     def __init__(self, coords: point[int], terrain: str):
         self.coords = coords
@@ -21,20 +23,30 @@ class Case(metaclass=Once):
         
     def capture(self, village: Village):
         self.controle = village
+        village.terres.append(self)
 
-    def collecte(self):
+    def collecte(self, montant=10):
         if self.controle is not None:
-            production = 15 if self.construite else 10 if self.terrain == "herbe" else 5
+            production = montant if self.terrain == "herbe" else montant//2
             if self.terrain == "roche":
                 self.controle.chef.argent += production
             else:
                 self.controle.chef.ressources += production
 
-    def construire(self):
-        if self.controle is not None:
-            self.construite = True
-            self.controle.chef.argent += -25
-            self.controle.chef.ressources += -25
+
+
+
+
+class Ferme(Case):
+    def __init__(self, case: Case, couleur: str):
+        assert case.controle
+
+        Case.__init__(self, case.coords, case.terrain)
+        self.controle = case.controle
+        self.couleur = couleur
+
+    def collecte(self, montant=20):
+        Case.collecte(self, montant)
 
 
 
@@ -58,7 +70,7 @@ class Village(Case):
 
     @property
     def max_habitants(self):
-        return 20*len(self.terres) #+ (1 if self.a_eglise else 0)
+        return 10 + sum((5 for c in self.terres if isinstance(c, Ferme)))
     
     @property
     def a_eglise(self):

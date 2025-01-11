@@ -3,17 +3,16 @@ import tkinter.messagebox as messagebox
 import subprocess
 from typing import TYPE_CHECKING
 
-import actions
-import math
-import random
 import config
+import actions
 
+from random import randint, choice, shuffle
 from projet import Player
-from carte import Case, Village
-from actions import guerre, creer_village
+from carte import Case
+from actions import guerre, construire_village
 from divers import bouton_autodestruction
 
-from gfx import Case_gfx, Village_gfx, carte
+from gfx import Village_gfx, carte
 
 from config import w, canevas, panneau, carte_w, carte_h
 from ui import UI
@@ -26,6 +25,9 @@ else:
 players: list[Player] = []
 playing = 0
 ui = UI()
+
+
+
 
 
 def start_game():
@@ -54,10 +56,9 @@ def zoom(e: tk.Event, factor: float):
     config.o_y += (config.o_y - y)*factor
 
 
-def create_players(case: Case_gfx):
+def create_players(x: int, y: int):
     global player, ui
-    v = Village_gfx(case, "lime")
-    x, y = case.coords
+    v = Village_gfx(carte[x][y], "lime")
     carte[x][y] = v
     player = Player("lime", v, True)
     players.append(player)
@@ -65,7 +66,7 @@ def create_players(case: Case_gfx):
 
     couleurs = ["gray", "sky blue", "black", "yellow", "purple", "orange", "pink", "saddle brown", "white"]
     for couleur in couleurs:
-        x, y = random.randint(1, carte_w-1), random.randint(1, carte_h-1)
+        x, y = randint(1, carte_w-1), randint(1, carte_h-1)
         case = carte[x][y]
         if case.controle:
             continue
@@ -82,23 +83,20 @@ def create_players(case: Case_gfx):
 
 
 def on_enter(x: int, y: int):
-    case = carte[x][y]
-    case.hover(False)
-
+    carte[x][y].hover(False)
     if player is None:
-        canevas.bind('<Button-1>', lambda _, case=case: create_players(case))
+        canevas.bind('<Button-1>', lambda _, x=x, y=y: create_players(x, y))
     else:
-        canevas.bind('<Button-1>', lambda _, case=case: on_click(case))
+        canevas.bind('<Button-1>', lambda _, x=x, y=y: on_click(x, y))
     
 
 def on_leave(x: int, y: int):
-    case = carte[x][y]
-    case.hover(True)
+    carte[x][y].hover(True)
     canevas.unbind("<Button-1>")
 
 
-def on_click(case: Case_gfx):
-    ui.update_panneau(case)
+def on_click(x: int, y: int):
+    ui.update_panneau(x, y)
 
     #village_info(case)
     #build_bouton(case)
@@ -123,11 +121,6 @@ def village_info(case: Case):
     if village is None:
         return
 
-    if village in player.fief and village != player.village:
-        bouton = bouton_autodestruction(panneau, "Collecter les impôts\n(coût 1 ⓐ)", lambda: impositionSeigneur(village.chef, player))
-        bouton.pack()
-        if player.actions<1:
-            bouton.config(state='disabled')
 
     #guerre
     if village.couleur != player.couleur:
@@ -157,29 +150,11 @@ def village_info(case: Case):
 
 
 
-def build_bouton(case: Case):
-    if case.controle in player.fief and not isinstance(case, Village) and not case.construite:
-        bouton = bouton_autodestruction(panneau, "Construire sur cette case\n(coût 25 ⁂, 25 ¤, 1 ⓐ)", lambda: build_case(case))
-        bouton.pack()
-        if player.actions < 1 or player.village.chef.ressources < 25 or player.village.chef.argent < 25:
-            bouton.config(state='disabled')
-
-def build_case(case: Case):
-    case.construire()
-    player.actions += -1
-    update_header()
 
 
 
 
 
-def showRecruitButton(i,j,player):
-    location=carte[i][j]
-    if location.controle in player.fief and location.caseType=="village":
-        recruitButton=tk.Button(panneau, text="Recruter un soldat\n(coût 1 ⓐ, 10 ¤)", command=lambda: useRecruitButton(player, location))
-        recruitButton.pack()
-        if player.actions<1 or player.village.chef.argent<10:
-            recruitButton.config(state='disabled')
 
 def showImmigrationButton(i,j,player):
     location=carte[i][j]
@@ -197,8 +172,6 @@ def showImmigrationButton(i,j,player):
         if player.actions<1:
             immigrationButton.config(state='disabled')
 
-
-
 def useImmigrationButton(player, loc, immigrationType):
     village = loc.controle
     actions.immigration(player, village, immigrationType.get() == "Paysans")
@@ -215,51 +188,14 @@ def useImmigrationButton(player, loc, immigrationType):
                 child.destroy()
         village_info(loc)
 
-def useRecruitButton(player, loc):
-    village = loc.controle
-    actions.recruterSoldat(player, village)
-    update_header()
-    for child in panneau.winfo_children():
-        if "Recruter un soldat\n(coût 1 ⓐ, 10 ¤)" in child.cget("text"):
-            child.destroy()
-    if player.j1:
-        village_info(loc)
-
-def drawBuilding(i,j,player):
-    taille_case = config.taille_case
-    tile=carte[i][j].tk_case
-    tilecos=canevas.coords(tile)
-    draw_gear(canevas, tilecos[0]+config.taille_case/2, tilecos[1]+taille_case/2, taille_case/4, 4, taille_case/5, player.couleur)
 
 
-def impositionSeigneur(vassal, player):
-    vassal.imposition_seigneur()
-    player.actions-=1
-    update_header()
-    for child in panneau.winfo_children():
-            if "Collecter les impôts\n(coût 1 ⓐ)" in child.cget("text"):
-                child.destroy()
 
 def showEndTurnButton():
     endTurnButton=tk.Button(panneau, text="Fin de tour", command=endTurns)
     endTurnButton.pack(side='bottom')
     
 
-def draw_gear(canevas, x, y, radius, num_teeth, tooth_size, color):
-    canevas.create_oval(x - radius, y - radius, x + radius, y + radius, outline="black", width=2, fill=color)
-    angle_step = 360 / num_teeth
-    for i in range(num_teeth):
-        angle = math.radians(i * angle_step)
-        next_angle = math.radians((i + 1) * angle_step)
-        inner_x1 = x + radius * math.cos(angle)
-        inner_y1 = y + radius * math.sin(angle)
-        inner_x2 = x + radius * math.cos(next_angle)
-        inner_y2 = y + radius * math.sin(next_angle)
-        outer_x1 = x + (radius + tooth_size) * math.cos(angle)
-        outer_y1 = y + (radius + tooth_size) * math.sin(angle)
-        outer_x2 = x + (radius + tooth_size) * math.cos(next_angle)
-        outer_y2 = y + (radius + tooth_size) * math.sin(next_angle)
-        canevas.create_polygon(inner_x1, inner_y1, outer_x1, outer_y1, outer_x2, outer_y2, inner_x2, inner_y2, fill=color, outline="black")
 
 
 
@@ -271,9 +207,9 @@ def draw_gear(canevas, x, y, radius, num_teeth, tooth_size, color):
 def newTurn():
     global playing
     playing=0
-    fun = random.randint(0,100)
+    fun = randint(0,100)
     actions.doEvent(fun)
-    random.shuffle(players)
+    shuffle(players)
     while playing<len(players):
         actions.villagerEachTurn(players[playing])
         actions.collecte_impots(players[playing])
@@ -312,7 +248,7 @@ def endTurns():
 def play(bot):
     all_actions = ['capture', 'collecte', 'build', 'construire_eglise', 'guerre', 'creer_village', 'collecte_impots', 'recruter_soldat']
     while bot.actions > 0:
-        action = random.choice(all_actions)
+        action = choice(all_actions)
         if action == 'capture' and bot.actions>=1:
             cos=bot.botCapture(carte)
             if cos:
@@ -335,7 +271,7 @@ def play(bot):
             villageloc = bot.botCreerVillage(carte)
             if villageloc:
                 x, y = villageloc.coords
-                creer_village(carte[x][y], bot)
+                construire_village(carte[x][y], bot)
         elif action == 'collecte_impots' and bot.actions>=1:
             bot.botCollecteImpots()
             bot.actions -= 1

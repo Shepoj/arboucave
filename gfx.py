@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import config
 
-from carte import Case, Village
+from math import radians, cos, sin
+from carte import Case, Ferme, Village
 
 from config import canevas, couleur_terrain, carte_w, carte_h, seuils, directions
 from divers import point, mix_couleurs, argmax, adjacent
@@ -23,6 +24,10 @@ class Case_gfx(Case):
         self.selected = False
 
         self.draw()
+ 
+    def capture(self, village: Village):
+        Case.capture(self, village)
+        self.redraw()
 
     @property
     def coords_canevas(self):
@@ -52,11 +57,7 @@ class Case_gfx(Case):
             case "s": return x  , y+t, x+t, y+t
             case "e": return x+t, y+t, x+t, y
             case "n": return x+t, y  , x  , y
-        raise ValueError 
-
-    def capture(self, village: Village):
-        Case.capture(self, village)
-        self.redraw()
+        raise ValueError
 
     def hover(self, after: bool):
         if self.selected:
@@ -133,23 +134,74 @@ class Case_gfx(Case):
 
 
 
+class Ferme_gfx(Ferme, Case_gfx):
+    def __init__(self, case: Case_gfx, couleur: str):
+        Ferme.__init__(self, case, couleur)
+        Case_gfx.__init__(self, case.coords, case.terrain)
+
+        canevas.delete(case.tk_case)
+        canevas.delete(case.tk_hover)
+
+    def draw(self):
+        Case_gfx.draw(self)
+        self.draw_ferme()
+    
+    def redraw(self):
+        Case_gfx.redraw(self)
+        self.redraw_ferme()
+
+    def draw_ferme(self):
+        if not self.controle:
+            return
+        couleur = self.controle.couleur
+
+        x, y = self.coords_canevas
+        t = config.taille_case
+        x, y = x + 1/2*t, y + 1/2*t
+
+        self.tk_ferme: list[int] = []
+
+        n = 5
+        r, s = 1/4*t, 1/5*t
+        pas = radians(360/n)
+        for i in range(n):
+            a = x +  r   *cos( i   *pas), y + r    *sin( i   *pas)
+            b = x +  r   *cos((i+1)*pas), y + r    *sin((i+1)*pas)
+            c = x + (r+s)*cos((i+1)*pas), y + (r+s)*sin((i+1)*pas)
+            d = x + (r+s)*cos( i   *pas), y + (r+s)*sin( i   *pas)
+            X = canevas.create_polygon(*a, *b, *c, *d, fill=couleur, outline="black", tags=[self.tag, "ferme"])
+            self.tk_ferme.append(X)
+
+    def redraw_ferme(self):
+        if not self.controle:
+            return
+        couleur = self.controle.couleur
+
+        for X in self.tk_ferme:
+            canevas.itemconfig(X, fill=couleur)
+
+
+
+
+
 class Village_gfx(Village, Case_gfx):
     def __init__(self, case: Case_gfx, couleur: str):
         Village.__init__(self, case, couleur)
         Case_gfx.__init__(self, case.coords, case.terrain)
 
         canevas.delete(case.tk_case)
+        canevas.delete(case.tk_hover)
     
     def construire_eglise(self):
         Village.construire_eglise(self)
         self.redraw()
         
     def draw(self):
-        super().draw()
+        Case_gfx.draw(self)
         self.draw_maison()
 
     def redraw(self):
-        super().redraw()
+        Case_gfx.redraw(self)
         self.redraw_maison()
 
     def draw_maison(self):
