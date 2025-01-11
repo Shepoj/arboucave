@@ -1,10 +1,10 @@
 from __future__ import annotations
-from tkinter import Canvas
-from typing import Callable
+
+import config
 
 from carte import Case, Village
 
-from config import canevas, couleur_terrain, carte_w, carte_h, taille_case, seuils, directions
+from config import canevas, couleur_terrain, carte_w, carte_h, seuils, directions
 from divers import point, mix_couleurs, argmax, adjacent
 from perlin import generate_perlin_grid
 
@@ -20,7 +20,14 @@ class Case_gfx(Case):
 
         x, y = self.coords
         self.tag = f"{x} {y}"
+        self.selected = False
+
         self.draw()
+
+    @property
+    def coords_canevas(self):
+        x, y = self.coords
+        return config.o_x + x*config.taille_case, config.o_y + y*config.taille_case
 
     @property
     def cases_voisines(self):
@@ -38,13 +45,13 @@ class Case_gfx(Case):
 
     # TODO enum pour directions
     def bord(self, d: str):
-        x, y = self.coords
-        t = taille_case
+        x, y = self.coords_canevas
+        t = config.taille_case
         match d:
-            case "w": return  x   *t,  y   *t,  x   *t, (y+1)*t
-            case "s": return  x   *t, (y+1)*t, (x+1)*t, (y+1)*t
-            case "e": return (x+1)*t, (y+1)*t, (x+1)*t,  y   *t
-            case "n": return (x+1)*t,  y   *t,  x   *t,  y   *t
+            case "w": return x  , y  , x  , y+t
+            case "s": return x  , y+t, x+t, y+t
+            case "e": return x+t, y+t, x+t, y
+            case "n": return x+t, y  , x  , y
         raise ValueError 
 
     def capture(self, village: Village):
@@ -52,17 +59,22 @@ class Case_gfx(Case):
         self.redraw()
 
     def hover(self, after: bool):
-        if after:
-            canevas.tag_lower(self.tk_case)
-            canevas.itemconfig(f"bord&&{self.tag}", state="normal")
+        if self.selected:
+            return
+
+        outline = "" if after else "red"
+        canevas.tag_raise(self.tk_hover)
+        canevas.itemconfig(self.tk_hover, outline=outline, dash=())
+
+    def select(self):
+        if self.selected:
+            self.selected = False
             outline = ""
         else:
-            canevas.tag_raise(self.tag, "all")
-            canevas.itemconfig(f"bord&&{self.tag}", state="hidden")
+            self.selected = True
             outline = "red"
-        
-        canevas.itemconfig(self.tk_case, outline=outline)
-    
+        canevas.itemconfig(self.tk_hover, outline=outline, dash=(5, 5))
+ 
     def draw(self):
         self.draw_case()
         self.draw_bords()
@@ -72,12 +84,16 @@ class Case_gfx(Case):
         self.redraw_bords()
 
     def draw_case(self):
-        x, y = self.coords
-        t = taille_case
+        x, y = self.coords_canevas
+        t = config.taille_case
 
         self.tk_case =\
-            canevas.create_rectangle(x*t, y*t, (x+1)*t, (y+1)*t,\
+            canevas.create_rectangle(x, y, x+t, y+t,\
                 outline="", width=2, tags=[self.tag, "case"])
+
+        self.tk_hover =\
+            canevas.create_rectangle(x, y, x+t, y+t,\
+                outline="", width=2, tags=[self.tag, "hover"])
 
         self.redraw_case()
 
@@ -109,9 +125,9 @@ class Case_gfx(Case):
                 bord = canevas.create_line(*self.bord(d), width=2, tags=[self.tag, case.tag, "bord"])
                 grille[x][y][i] = bord
 
-            dash = (5,5) if case.controle is not None and case.controle.couleur == self.controle.couleur else None
+            dash = (5,5) if case.controle is not None and case.controle.couleur == self.controle.couleur else ()
             canevas.itemconfig(bord, fill=couleur, dash=dash)
-            canevas.tag_raise(bord)
+        canevas.tag_raise(self.tk_hover)
 
 
 
@@ -137,17 +153,17 @@ class Village_gfx(Village, Case_gfx):
         self.redraw_maison()
 
     def draw_maison(self):
-        x, y = self.coords
-        t = taille_case
+        x, y = self.coords_canevas
+        t = config.taille_case
 
         self.tk_maison =\
-            canevas.create_polygon((x+1/2)*t, (y+1/6)*t, (x+1/6)*t, (y+2/6)*t, (x+1/6)*t, (y+5/6)*t, (x+5/6)*t, (y+5/6)*t, (x+5/6)*t, (y+2/6)*t,\
+            canevas.create_polygon(x+1/2*t, y+1/6*t, x+1/6*t, y+1/3*t, x+1/6*t, y+5/6*t, x+5/6*t, y+5/6*t, x+5/6*t, y+1/3*t,\
                 outline="black", tags=[self.tag, "village"])
         
         # horizontal, vertical
         self.tk_croix =\
-            canevas.create_line((x+1/3)*t, (y+0.45)*t, (x+2/3)*t, (y+0.45)*t, width=2, tags=[self.tag]),\
-            canevas.create_line((x+1/2)*t, (y+2.5/8)*t, (x+1/2)*t, (y+6/8)*t, width=2, tags=[self.tag])
+            canevas.create_line(x+1/3*t, y+0.45*t, x+2/3*t, y+0.45*t, width=2, tags=[self.tag]),\
+            canevas.create_line(x+1/2*t, y+2.5/8*t, x+1/2*t, y+6/8*t, width=2, tags=[self.tag])
         
         self.redraw_maison()
     

@@ -1,37 +1,41 @@
 import tkinter as tk
 import tkinter.messagebox as messagebox
 import subprocess
+from typing import TYPE_CHECKING
 
 import actions
 import math
 import random
+import config
 
 from projet import Player
 from carte import Case, Village
-from actions import guerre, creer_village, construire_eglise
-from divers import adjacent, bouton_autodestruction
+from actions import guerre, creer_village
+from divers import bouton_autodestruction
 
 from gfx import Case_gfx, Village_gfx, carte
 
-from config import *
+from config import w, canevas, panneau, carte_w, carte_h
+from ui import UI
 
 
+if TYPE_CHECKING:
+    player: Player
+else:
+    player = None
 players: list[Player] = []
 playing = 0
-
-
-
+ui = UI()
 
 
 def start_game():
-    canevas.bind("<MouseWheel>", do_zoom) 
-    canevas.bind("<4>", do_zoom_in)
-    canevas.bind("<5>", do_zoom_out) 
+    canevas.bind("<KP_Add>",      lambda e: zoom(e, 0.1))
+    canevas.bind("<KP_Subtract>", lambda e: zoom(e, -0.1))
 
-    canevas.bind("<ButtonPress-2>", lambda event: canevas.scan_mark(event.x, event.y))
-    canevas.bind("<ButtonPress-3>", lambda event: canevas.scan_mark(event.x, event.y))
-    canevas.bind("<B2-Motion>", lambda event: canevas.scan_dragto(event.x, event.y, gain=1))
-    canevas.bind("<B3-Motion>", lambda event: canevas.scan_dragto(event.x, event.y, gain=1))
+    #canevas.bind("<ButtonPress-2>", lambda event: canevas.scan_mark(event.x, event.y))
+    canevas.bind("<ButtonPress-3>", lambda e: canevas.scan_mark(e.x, e.y))
+    #canevas.bind("<B2-Motion>", lambda e: canevas.scan_dragto(e.x, e.y, gain=1))
+    canevas.bind("<B3-Motion>", lambda e: canevas.scan_dragto(e.x, e.y, gain=1))
 
     for x in range(carte_w):
         for y in range(carte_h):
@@ -40,17 +44,28 @@ def start_game():
             canevas.tag_bind(case.tag, '<Leave>', lambda _, x=x, y=y: on_leave(x, y))
 
 
+def zoom(e: tk.Event, factor: float):
+    x = canevas.canvasx(e.x)
+    y = canevas.canvasy(e.y)
+    canevas.scale("all", x, y, 1 + factor, 1 + factor)
+    
+    config.taille_case *= 1 + factor
+    config.o_x += (config.o_x - x)*factor
+    config.o_y += (config.o_y - y)*factor
+
+
 def create_players(case: Case_gfx):
-    global player
+    global player, ui
     v = Village_gfx(case, "lime")
     x, y = case.coords
     carte[x][y] = v
     player = Player("lime", v, True)
     players.append(player)
+    ui.player = player
 
-    couleurs = ["red", "sky blue", "black", "yellow", "purple", "orange", "pink", "brown", "white"]
+    couleurs = ["gray", "sky blue", "black", "yellow", "purple", "orange", "pink", "saddle brown", "white"]
     for couleur in couleurs:
-        x, y = random.randint(0,111), random.randint(0,83)
+        x, y = random.randint(1, carte_w-1), random.randint(1, carte_h-1)
         case = carte[x][y]
         if case.controle:
             continue
@@ -83,40 +98,21 @@ def on_leave(x: int, y: int):
 
 
 def on_click(case: Case_gfx):
-    for child in panneau.winfo_children():
-        child.destroy()
-    
-    x, y = case.coords
-    label = tk.Label(panneau, text=f'Case {x}, {y}', bg='gray')
-    label.pack(side="top")
+    ui.update_panneau(case)
 
-    village_info(case)
-    village_button(case)
-    eglise_bouton(case)
-    capture_button(case)
-    collect_bouton(case)
-    build_bouton(case)
+    #village_info(case)
+    #build_bouton(case)
 
     #showImmigrationButton(i,j,player)
     #showRecruitButton(i,j,player)
-    showEndTurnButton()
-
+    #showEndTurnButton()
 
 
 
 
 def update_header():
-    for child in donnees.winfo_children():
-        child.destroy()
-
-    label = tk.Label(donnees, text=f"      Argent: {player.village.chef.argent} ¤      ", bg="gray")
-    label.pack(side="left")
-
-    label = tk.Label(donnees, text=f"Ressources: {player.village.chef.ressources} ⁂", bg="gray")
-    label.pack(side="left")
-
-    label = tk.Label(donnees, text=f"Points d\'action: {player.actions} ⓐ      ", bg="gray")
-    label.pack(side="right")
+    if ui is not None:
+        ui.update_header()
 
 
 
@@ -126,32 +122,8 @@ def village_info(case: Case):
     village = case.controle
     if village is None:
         return
-    
-    for child in panneau.winfo_children():
-        child.destroy()
-
-    label = tk.Label(panneau, text=f"Chef : {village.chef}", bg='gray')
-    label.pack(side="top")
-    if village == player.village:
-        label.config(text=f"Chef : {village.chef}\n(votre village)")
-    
-    if village.a_eglise:
-        label = tk.Label(panneau, text='Le village possède une église.', bg='gray')
-        label.pack(side="top")
-    
-    label = tk.Label(panneau, text=f"Habitants : {len(village.habitants)}/{village.max_habitants}", bg='gray')
-    label.pack(side="top")
-
-    if village in player.fief:
-        label = tk.Label(panneau, text=f"Votre armée : {player.armee}", bg='gray')
-    else:
-        label = tk.Label(panneau, text=f"Armée du village : {village.armee}", bg='gray')
-    label.pack(side="top")
 
     if village in player.fief and village != player.village:
-        label = tk.Label(panneau, text='Vassal de votre village.', bg='gray')
-        label.pack(side="top")
-
         bouton = bouton_autodestruction(panneau, "Collecter les impôts\n(coût 1 ⓐ)", lambda: impositionSeigneur(village.chef, player))
         bouton.pack()
         if player.actions<1:
@@ -180,93 +152,6 @@ def village_info(case: Case):
         if player.actions < 3 or player.armee == 0:
             bouton.config(state="disabled")
 
-
-
-
-
-def village_button(case: Case_gfx):
-    if case.controle not in player.fief:
-        return
-
-    i, j = case.coords
-    minx, miny = max(0, i-2), max(0, j-2)
-    maxx, maxy = min(carte_w, i+3), min(carte_h, j+3)
-    aucun_village = True
-    for x in range(minx, maxx):
-        for y in range(miny, maxy):
-            if isinstance(carte[x][y], Village):
-                aucun_village = False
-                break
-
-    if aucun_village:
-        bouton = bouton_autodestruction(panneau, "Construire un village\n(coût 1 ⓐ, 10 ⁂)", lambda: creer_village(case, player))
-        bouton.pack()
-
-        if player.actions < 1 or player.village.chef.ressources < 10:
-          bouton.config(state='disabled')
-
-
-
-
-
-def eglise_bouton(case: Case):
-    if not isinstance(case, Village):
-        return
-    village = case
-    
-    if village in player.fief and not village.a_eglise:
-        bouton = bouton_autodestruction(panneau, "Construire une église\n(coût 1 ⓐ, 10 ⁂)", lambda v=village: construire_eglise(v, player))
-        bouton.pack()
-        if player.actions < 1 or player.village.chef.ressources < 10:
-            bouton.config(state='disabled')
-
-
-
-
-
-### capture (étendre territoire)
-
-def capture_button(case: Case):
-    x, y = case.coords
-
-    if case.controle is None:
-        b = False
-        for i, j in adjacent((x, y), (0, 0), (carte_w, carte_h)).values():
-            if carte[i][j].controle in player.fief:
-                b = True
-                break 
-
-        if b:
-            bouton = bouton_autodestruction(panneau, "Annexer cette case\n(coût 1 ⓐ)", lambda: capture(case, player))
-            bouton.pack()
-            if player.actions < 1:
-                bouton.config(state='disabled')
-  
-def capture(case: Case, player: Player):
-    if case.controle is not None:
-        return
-
-    case.capture(player.village)
-    player.actions += 1
-
-    if player.j1:
-        update_header() 
-
-
-
-
-
-def collect_bouton(case: Case):
-    if case.controle in player.fief and not isinstance(case, Village):
-        bouton = bouton_autodestruction(panneau, "Collecter les ressources\n(coût 2 ⓐ)", lambda: collect_ressources(case, player))
-        bouton.pack()
-        if player.actions < 2:
-            bouton.config(state="disabled")
-
-def collect_ressources(case: Case, player: Player):
-    case.collecte()
-    player.actions -= 2
-    update_header()
 
 
 
@@ -341,10 +226,10 @@ def useRecruitButton(player, loc):
         village_info(loc)
 
 def drawBuilding(i,j,player):
-    global taille_case
+    taille_case = config.taille_case
     tile=carte[i][j].tk_case
     tilecos=canevas.coords(tile)
-    draw_gear(canevas, tilecos[0]+taille_case/2, tilecos[1]+taille_case/2, taille_case/4, 4, taille_case/5, player.couleur)
+    draw_gear(canevas, tilecos[0]+config.taille_case/2, tilecos[1]+taille_case/2, taille_case/4, 4, taille_case/5, player.couleur)
 
 
 def impositionSeigneur(vassal, player):
@@ -356,9 +241,6 @@ def impositionSeigneur(vassal, player):
                 child.destroy()
 
 def showEndTurnButton():
-    for child in panneau.winfo_children():
-        if "Fin de tour" in child.cget("text"):
-            child.destroy()
     endTurnButton=tk.Button(panneau, text="Fin de tour", command=endTurns)
     endTurnButton.pack(side='bottom')
     
@@ -381,36 +263,6 @@ def draw_gear(canevas, x, y, radius, num_teeth, tooth_size, color):
 
 
 
-
-
-def do_zoom(event):
-    x = canevas.canvasx(event.x)
-    y = canevas.canvasy(event.y)
-    factor = 1.001 ** event.delta
-    canevas.scale(tk.ALL, x, y, factor, factor)
-
-
-def do_zoom_in(event):
-    global taille_case
-    x = canevas.canvasx(event.x)
-    y = canevas.canvasy(event.y)
-    if taille_case<=70:
-        factor = 1.1
-        taille_case=taille_case*factor
-        canevas.scale(tk.ALL, x, y, factor, factor) #https://stackoverflow.com/questions/48112492/canvas-scale-only-size-but-not-coordinates html
-    
-
-def do_zoom_out(event):
-    global taille_case
-    x = canevas.canvasx(event.x)
-    y = canevas.canvasy(event.y)
-    if taille_case>=8:
-        factor = 0.9
-        taille_case=taille_case*factor
-        canevas.scale(tk.ALL, x, y, factor, factor)
-
-def test(event):
-    print(canevas.canvasx(event.x),canevas.canvasy(event.y))
 
 
 
@@ -465,7 +317,7 @@ def play(bot):
             cos=bot.botCapture(carte)
             if cos:
                 x,y=cos
-                capture(carte[x][y], bot)
+                #capture(carte[x][y], bot)
         elif action == 'collecte' and bot.actions>=2:
             if bot.botCollecte():
                 bot.actions -= 2
@@ -521,8 +373,6 @@ def winCheck():
         else:
             w.destroy()
             return
-
-
 
 
 

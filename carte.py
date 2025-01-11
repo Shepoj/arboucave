@@ -21,7 +21,6 @@ class Case(metaclass=Once):
         
     def capture(self, village: Village):
         self.controle = village
-        #self.redraw() TODO
 
     def collecte(self):
         if self.controle is not None:

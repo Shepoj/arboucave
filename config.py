@@ -1,23 +1,13 @@
-from typing import TYPE_CHECKING
+from tkinter import Tk, Frame, Canvas
 
-import tkinter as tk
 
 
 
 carte_w, carte_h = 112, 84
 
-if TYPE_CHECKING:
-    from projet import Player
-
-    player: Player
-    players: list[Player]
-else:
-    player = None
-    Players = []
-
-
-
-taille_case = 35
+# traque l'origine et la taille des cases (obligé à cause du z##m)
+taille_case = 35.
+o_x, o_y = 0., 0.
 
 seuils = {
     32: "roche",
@@ -35,16 +25,22 @@ directions = ("w", "s", "e", "n")
 
 
 
-w = tk.Tk()
 
-donnees=tk.Frame(w, width=1182, height=40, bg='gray')
-donnees.pack_propagate(False)
+fenetre_w, fenetre_h = 1200, 800
+canevas_w, canevas_h = 1000, 750
+ui_couleur = "lavender"
 
-canevas = tk.Canvas(w, width=982, height=737, bg='white')
+w = Tk()
 
-panneau=tk.Frame(w, width=200, height=737, bg='gray')
+header = Frame(w, width=fenetre_w, height=fenetre_h-canevas_h, bg=ui_couleur)
+header.pack_propagate(False)
+
+canevas = Canvas(w, width=canevas_w, height=canevas_h, bg="white", highlightthickness=0) #scrollregion=(0, 0, carte_w*taille_case, carte_h*taille_case)
+canevas.focus_set()
+
+panneau = Frame(w, width=fenetre_w-canevas_w, height=canevas_h, bg=ui_couleur)
 panneau.pack_propagate(False)
 
-donnees.grid(column=0, row=0, columnspan=2)
+header.grid(column=0, row=0, columnspan=2)
 canevas.grid(column=0, row=1)
 panneau.grid(column=1, row=1)

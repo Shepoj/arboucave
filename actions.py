@@ -1,7 +1,25 @@
 from projet import Player
 from gens import Roturier, Soldat, Ecclesiastique, Noble
-from carte import Village
+from carte import Case, Village
 from gfx import Case_gfx, Village_gfx, carte
+
+
+
+
+
+def capture(case: Case, player: Player):
+    player.actions += -1
+    case.capture(player.village)
+
+def collecte_ressources(case: Case, player: Player):
+    case.collecte()
+    player.actions += -2
+    
+def construire_eglise(village: Village, player: Player):
+    player.actions += -1
+    village.construire_eglise()
+
+
 
 
 
@@ -23,10 +41,6 @@ def immigration(player, village: Village, paysan = True):
             print("Un habitant n'a pas pu être ajouté") #FENETRE"""
  
 
-def construire_eglise(village: Village, player: Player):
-    player.actions += -1
-    village.construire_eglise()
-
 
 def vassaliser(seigneur,vassal):
     pass
@@ -40,7 +54,6 @@ def creer_village(case: Case_gfx, player: Player):
     x, y = v.coords
     carte[x][y] = v
     player.fief.append(v)
-    # TODO
     return v
 
 
