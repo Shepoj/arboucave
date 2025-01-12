@@ -1,19 +1,13 @@
 from typing import TYPE_CHECKING
 import tkinter as tk
-import tkinter.messagebox as messagebox
-import subprocess
 
 import config
-import actions
 import projet
 
-from random import randint, choice, shuffle
+from random import randint
 from projet import Player
-from carte import Case
-from actions import guerre, construire_village
-from divers import bouton_autodestruction
 from gfx import Village_gfx, carte
-from config import w, canevas, panneau, carte_w, carte_h
+from config import w, canevas, carte_w, carte_h
 from ui import ui
 
 
