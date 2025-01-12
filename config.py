@@ -31,6 +31,7 @@ canevas_w, canevas_h = 1000, 750
 ui_couleur = "lavender"
 
 w = Tk()
+w.resizable(False, False)
 
 header = Frame(w, width=fenetre_w, height=fenetre_h-canevas_h, bg=ui_couleur)
 header.pack_propagate(False)

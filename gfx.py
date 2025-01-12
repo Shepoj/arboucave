@@ -5,7 +5,7 @@ import config
 from math import radians, cos, sin
 from carte import Case, Ferme, Village
 
-from config import canevas, couleur_terrain, carte_w, carte_h, seuils, directions
+from config import canevas, couleur_terrain, carte_w, carte_h, seuils
 from divers import point, mix_couleurs, argmax, adjacent
 from perlin import generate_perlin_grid
 
@@ -161,7 +161,7 @@ class Ferme_gfx(Ferme, Case_gfx):
 
         self.tk_ferme: list[int] = []
 
-        n = 5
+        n = 7
         r, s = 1/4*t, 1/5*t
         pas = radians(360/n)
         for i in range(n):

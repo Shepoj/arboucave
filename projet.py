@@ -8,6 +8,10 @@ from random import random, randint, shuffle, choice
 
 
 
+players: list[Player] = []
+
+
+
 
 
 class Player():

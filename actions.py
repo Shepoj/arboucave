@@ -1,7 +1,10 @@
+from enum import Enum
 from projet import Player
-from gens import Roturier, Soldat, Ecclesiastique, Noble
+from gens import Artisant, Paysan, Roturier, Soldat
 from carte import Case, Village
 from gfx import Case_gfx, Ferme_gfx, Village_gfx, carte
+
+import projet
 
 
 
@@ -44,7 +47,6 @@ def construire_village(case: Case_gfx, player: Player):
     player.fief.append(v)
     v.draw()
     return v
-    
 
 # village
 def construire_eglise(village: Village, player: Player):
@@ -60,30 +62,32 @@ def recruter_soldat(village: Village, player: Player):
     village.chef.argent += -10
     village.ajout_habitant(Soldat(village))
 
+def immigration(village: Village, player: Player, paysans: bool):
+    if paysans:
+        cout = 1
+        Type = Paysan
+    else:
+        cout = 2
+        Type = Artisant
+    player.actions += -cout
+    for _ in range(3):
+        village.ajout_habitant(Type(village))
+
 
 
 
 # chaque tour
+def fin_tour():
+    for player in projet.players:
+        collecte_impots(player)
+        #villagerEachTurn(player)
+
 def collecte_impots(player: Player):
     for village in player.fief:
         village.chef.collecte_impots()
     
     for village in player.fief:
         village.chef.distribution_dime()
-
-
-def immigration(player, village: Village, paysan = True):
-    player.actions += -1 if paysan else -2
-    for _ in range(3):
-        if village.max_habitants > len(village.habitants):
-                village.ajout_habitant(Roturier(village))
-                """if not resultat:
-            print("Un habitant n'a pas pu être ajouté") #FENETRE"""
- 
-
-
-def vassaliser(seigneur,vassal):
-    pass
 
 def villagerEachTurn(player: Player):
     for village in player.fief:
@@ -94,6 +98,9 @@ def villagerEachTurn(player: Player):
                     continue
             villageois.consommer()
             
+
+
+
 
 def strategie(armee: int, part: tuple[int, int, int]):
     total = part[0] + part[1] + part[2]
@@ -137,8 +144,8 @@ def guerre(player: Player, cible: Player):
     cible.vaincre(player)
     return False
 
-def doEvent(fun):
-    pass
+
+
 
 
 if __name__ == "__main__":
